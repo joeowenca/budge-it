@@ -1,6 +1,8 @@
-# Getting Started with Create React App
+# Budge-it! A simple budget app
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+![Alt text](https://imagedelivery.net/ra500NQoeUq2mHNe2TetzA/067d21e0-60ee-4169-24a2-bb4357a10f00/Thumbnail)
 
 ## Available Scripts
 
