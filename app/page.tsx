@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ThemeToggle from './components/ThemeToggle';
 import AddCategoryModal from './components/AddCategoryModal';
 import AddItemModal from './components/AddItemModal';
+import CalculatorModal from './components/CalculatorModal';
 
 interface BudgetItem {
   id: string;
@@ -29,6 +30,7 @@ export default function Home() {
   const [isIncomeItemModalOpen, setIsIncomeItemModalOpen] = useState(false);
   const [isExpenseCategoryModalOpen, setIsExpenseCategoryModalOpen] = useState(false);
   const [isExpenseItemModalOpen, setIsExpenseItemModalOpen] = useState(false);
+  const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -151,7 +153,18 @@ export default function Home() {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">Budge-It</h1>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCalculatorModalOpen(true)}
+              className="p-2 rounded-lg bg-secondary hover:bg-accent transition-colors border border-border cursor-pointer"
+              aria-label="Open calculator"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -352,6 +365,11 @@ export default function Home() {
         onAdd={addExpenseItem}
         type="expense"
         categories={expenseCategories}
+      />
+      
+      <CalculatorModal
+        isOpen={isCalculatorModalOpen}
+        onClose={() => setIsCalculatorModalOpen(false)}
       />
     </div>
   );
