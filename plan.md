@@ -1,10 +1,10 @@
 # Implementation Plan - Personal Budget Tracker
 
 ## Phase 1: Foundation & Database
-- [ ] **Step 1.1**: Initialize project & install dependencies.
+- [x] **Step 1.1**: Initialize project & install dependencies.
     - Install: `drizzle-orm`, `@neondatabase/serverless`, `dotenv`, `zod`.
     - Install Dev: `drizzle-kit`.
-    - **Config**: Enable `experimental: { reactCompiler: true }` in `next.config.ts`.
+    - **Config**: Enable `{ reactCompiler: true }` in `next.config.ts`.
 - [ ] **Step 1.2**: Set up Database Client.
     - Create `src/db/drizzle.ts` using `@neondatabase/serverless`.
     - Configure `.env.local` with `DATABASE_URL`.
