@@ -11,7 +11,7 @@ const addTransactionSchema = z.object({
   amount: z.number().positive().transform((val) => Math.round(val * 100)),
   label: z.string().min(1),
   categoryLabel: z.string().min(1),
-  type: z.enum(["income", "expense"]),
+  type: z.enum(["income", "expense", "purchase"]),
   date: z.date(),
 });
 
