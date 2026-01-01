@@ -22,7 +22,7 @@
     - Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` to `.env.local`.
     - Wrap `src/app/layout.tsx` in `<ClerkProvider>`.
     - Create `src/middleware.ts` to protect routes.
-- [ ] **Step 2.2**: Create the "User Sync" Utility.
+- [x] **Step 2.2**: Create the "User Sync" Utility.
     - Create `src/lib/checkUser.ts`.
     - Logic: Get Clerk user -> Check DB for `clerkId` -> If missing, Insert into DB -> Return DB User Object.
 - [ ] **Step 2.3**: Verify Auth.
