@@ -5,10 +5,10 @@
     - Install: `drizzle-orm`, `@neondatabase/serverless`, `dotenv`, `zod`.
     - Install Dev: `drizzle-kit`.
     - **Config**: Enable `{ reactCompiler: true }` in `next.config.ts`.
-- [ ] **Step 1.2**: Set up Database Client.
+- [x] **Step 1.2**: Set up Database Client.
     - Create `src/db/drizzle.ts` using `@neondatabase/serverless`.
     - Configure `.env.local` with `DATABASE_URL`.
-- [ ] **Step 1.3**: Define Schema in `src/db/schema.ts`.
+- [x] **Step 1.3**: Define Schema in `src/db/schema.ts`.
     - `users`: (id, clerkId, email, name, createdAt).
     - `transactions`: (id, amount, description, date, category, type['income', 'expense'], userId, createdAt).
     - `budgets`: (id, category, limit, period, userId).
