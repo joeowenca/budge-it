@@ -29,10 +29,10 @@
     - Create a temporary call in `src/app/page.tsx` to `checkUser()` and log the result to ensure users are being saved to Postgres.
 
 ## Phase 3: UI Shell & Navigation
-- [ ] **Step 3.1**: Initialize Shadcn UI.
+- [x] **Step 3.1**: Initialize Shadcn UI.
     - Run `npx shadcn@latest init`.
     - Add components: `button`, `input`, `label`, `card`, `sheet` (mobile menu), `dialog`, `select`.
-- [ ] **Step 3.2**: Create App Layout.
+- [x] **Step 3.2**: Create App Layout.
     - Create `src/components/Navbar.tsx` (or Sidebar).
     - Ensure it is responsive.
     - Add a "UserButton" from Clerk.
