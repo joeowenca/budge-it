@@ -28,7 +28,7 @@ export const transactions = pgTable("transactions", {
   categoryId: integer("category_id").references(() => categories.id).notNull(),
   type: text("type").notNull(),
   label: text("label"),
-  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: integer("amount").notNull(),
   date: timestamp("date").notNull(),
   isRecurring: boolean("is_recurring").default(false),
   interval: text("interval"),
