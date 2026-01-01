@@ -13,7 +13,7 @@
     - `transactions`: (id, amount, description, date, category, type['income', 'expense'], userId, createdAt).
     - `budgets`: (id, category, limit, period, userId).
     - Ensure correct Foreign Key relationships (transactions.userId -> users.id).
-- [ ] **Step 1.4**: Generate and Push Migrations.
+- [x] **Step 1.4**: Generate and Push Migrations.
     - Run `npx drizzle-kit generate` and `npx drizzle-kit push`.
 
 ## Phase 2: Authentication & User Sync (Critical)
