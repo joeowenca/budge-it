@@ -37,48 +37,41 @@
     - Ensure it is responsive.
     - Add a "UserButton" from Clerk.
 
-## Phase 4: Dashboard Architecture & Data Entry (Columns 1 & 3)
-*Focus: Setting up the responsive grid and enabling data entry for Income (Col 1) and Expenses (Col 3).*
+## Phase 4: Create a responsive layout
 
 - [ ] **Step 4.1**: The Responsive Grid Shell.
     - Create `src/app/page.tsx` with the **3-Column Layout** for Desktop:
         - **Col 1:** Budget
         - **Col 2:** Insights
-        - **Col 3:** Purchases
+        - **Col 3:** Spending
     -Each column should be its own component stored in `src/components` but rendered on `src/app/page.tsx`
-    - Implement **Mobile View**:
-        - Reduce the 3-column layout down to 1-column, where at the top of this large singular mobile view column, we have an overview with essential actions like adding purchases and displaying helpful data/information.
-- [ ] **Step 4.2**: Column 3 - Purchase Log (Expenses).
-    - **Backend**: Create `addTransaction` Server Action (for expenses).
-    - **UI**: Create `TransactionList` component.
-        - Scrollable feed of recent purchases.
-        - Filter by Date / Sort by Amount.
-    - **UI**: Create `AddExpenseForm` (Small inline form or Drawer).
-- [ ] **Step 4.3**: Column 1 - Budget & Income Manager.
-    - **Backend**: Create `addIncome` Server Action.
-    - **UI**: Create `IncomeManager` Component (Top of Col 1).
-        - Add Income Categories (e.g., "Salary", "Gift").
-        - Log Income Events (e.g., "Sept 15 Paycheque").
-    - **UI**: Create `BudgetTargets` Component (Bottom of Col 1).
-        - Visual progress bars for expense categories (e.g., "Groceries: $150/$400").
+    -Each component/column should have a title, like "Budget", "Insights", and "Spending"
+    -There should be a 4th component that spans along the entire top of the page, below the Navbar, and above the 3 columns. This is going to be an overview component.
+- [ ] **Step 4.2**: Make the layout responsive with a mobile view
+    - Reduce the 3-column layout down to 1-column, all components are sorted vertically and you can scroll down them. The top will be the Overview component, then Insights, then Spending, then Budget.
 
-## Phase 5: The "Brain" - Analytics (Column 2)
+## Phase 5: Add functionality to the Budget component
+
+- [ ] **Step 5.1**: Ability to add either Income or Expense categories
+    - **Backend**: Create `addTransaction` Server Action (for income and expenses).
+
+## Phase 6: The "Brain" - Analytics (Column 2)
 *Focus: Filling the center column with insights derived from the data in Cols 1 & 3.*
 
-- [ ] **Step 5.1**: Data Aggregation.
+- [ ] **Step 6.1**: Data Aggregation.
     - Create `getFinancialInsights` Server Action.
     - Calculate: Total Income, Total Expenses, Net Balance.
     - Group data by Category for charts.
-- [ ] **Step 5.2**: Center Column Visualizations.
+- [ ] **Step 6.2**: Center Column Visualizations.
     - **Pie Chart**: "Expense Breakdown" (Housing vs Food vs Fun).
     - **Bar/Area Chart**: "3-Month Trend" (Income vs Expense over time).
     - **Net Logic**: "Available to Spend" (Income - Expenses).
 
-## Phase 6: Polish & Refinement
-- [ ] **Step 6.1**: Mobile Optimization.
+## Phase 7: Polish & Refinement
+- [ ] **Step 7.1**: Mobile Optimization.
     - Ensure the "Quick Add" button on mobile works smoothly.
     - Check touch targets for scrolling lists.
-- [ ] **Step 6.2**: Date Filtering.
+- [ ] **Step 7.2**: Date Filtering.
     - Add a "Month Picker" to the top of the dashboard to filter all 3 columns by a specific month.
-- [ ] **Step 6.3**: Empty States.
+- [ ] **Step 7.3**: Empty States.
     - Design friendly "No transactions yet" states for the columns.
