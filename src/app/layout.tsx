@@ -19,9 +19,11 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={inter.className}>
+        <body className={`${inter.className} h-screen flex flex-col overflow-hidden`}>
           <Navbar />
-          {children}
+          <main className="flex-1 overflow-hidden bg-background">
+             {children}
+          </main>
         </body>
       </html>
     </ClerkProvider>

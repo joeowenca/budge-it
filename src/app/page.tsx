@@ -15,8 +15,8 @@ export default async function Home() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <div className="h-full container mx-auto p-4">
       <DashboardGrid />
-    </main>
+    </div>
   );
 }
