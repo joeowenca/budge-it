@@ -12,36 +12,42 @@
 *Reference this for all DB operations:*
 
 ```typescript
-import { pgTable, text, timestamp, integer, uuid, decimal, boolean } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, timestamp, numeric, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: serial("id").primaryKey(),
   clerkId: text("clerk_id").notNull().unique(),
   email: text("email").notNull(),
   name: text("name"),
   imageUrl: text("image_url"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  currency: text("currency").default("USD"),
+  theme: text("theme").default("system"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: text("type").notNull(),
+  label: text("label").notNull(),
+  color: text("color").default("#000000"),
+  isArchived: boolean("is_archived").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const transactions = pgTable("transactions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  description: text("description").notNull(),
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  categoryId: integer("category_id").references(() => categories.id).notNull(),
+  type: text("type").notNull(),
+  label: text("label"),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   date: timestamp("date").notNull(),
-  category: text("category").notNull(), // e.g., "Groceries", "Rent"
-  type: text("type").notNull(), // 'income' or 'expense'
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const budgets = pgTable("budgets", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  category: text("category").notNull(),
-  limit: decimal("limit", { precision: 10, scale: 2 }).notNull(),
-  period: text("period").default("monthly"), // 'monthly', 'weekly'
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isRecurring: boolean("is_recurring").default(false),
+  interval: text("interval"),
+  isPaid: boolean("is_paid").default(false),
+  memo: text("memo"),
+  isArchived: boolean("is_archived").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 ```

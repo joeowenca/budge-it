@@ -1,4 +1,5 @@
 import { integer, pgTable, serial, text, timestamp, numeric, boolean } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -36,3 +37,27 @@ export const transactions = pgTable("transactions", {
   isArchived: boolean("is_archived").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const usersRelations = relations(users, ({ many }) => ({
+  categories: many(categories),
+  transactions: many(transactions),
+}));
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  user: one(users, {
+    fields: [categories.userId],
+    references: [users.id],
+  }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [transactions.categoryId],
+    references: [categories.id],
+  }),
+}));
