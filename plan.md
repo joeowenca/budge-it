@@ -39,7 +39,7 @@
 
 ## Phase 4: Create a responsive layout
 
-- [ ] **Step 4.1**: The Responsive Grid Shell.
+- [x] **Step 4.1**: The Responsive Grid Shell.
     - Create `src/app/page.tsx` with the **3-Column Layout** for Desktop:
         - **Col 1:** Budget
         - **Col 2:** Insights
@@ -47,13 +47,46 @@
     -Each column should be its own component stored in `src/components` but rendered on `src/app/page.tsx`
     -Each component/column should have a title, like "Budget", "Insights", and "Spending"
     -There should be a 4th component that spans along the entire top of the page, below the Navbar, and above the 3 columns. This is going to be an overview component.
-- [ ] **Step 4.2**: Make the layout responsive with a mobile view
+- [x] **Step 4.2**: Make the layout responsive with a mobile view
     - Reduce the 3-column layout down to 1-column, all components are sorted vertically and you can scroll down them. The top will be the Overview component, then Insights, then Spending, then Budget.
 
-## Phase 5: Add functionality to the Budget component
+## Phase 5: Budget Component & Transaction Management
+*Focus: Turning the "Budget" column into a functional manager using Relational Data.*
 
-- [ ] **Step 5.1**: Ability to add either Income or Expense categories
-    - **Backend**: Create `addTransaction` Server Action (for income and expenses).
+- [ ] **Step 5.1**: Backend - Database Relations & Actions.
+    - **Update Schema**: Edit `src/db/schema.ts` to add `relations`.
+        - Define `usersRelations` (one-to-many transactions, one-to-many categories).
+        - Define `categoriesRelations` (one-to-many transactions).
+        - Define `transactionsRelations` (one-to-one category).
+    - Create `src/app/actions/transactionActions.ts`.
+    - **Action 1**: `addTransaction(data)`.
+        - Logic: Upsert Category (Find existing or Create new) -> Insert Transaction with `categoryId`.
+    - **Action 2**: `getBudgetTransactions()`.
+        - Query: `db.query.categories.findMany` matching the userId.
+        - Options: `with: { transactions: { orderBy: (t, { desc }) => [desc(t.date)] } }`.
+        - Result: Returns Categories with their Transactions nested inside, sorted by newest first.
+
+- [ ] **Step 5.2**: UI - The "Add Transaction" Dialog.
+    - Create `src/components/dashboard/AddTransactionDialog.tsx`.
+    - Features:
+        - **Type Toggle**: Income vs Expense.
+        - **Category Input**: Combobox (Select existing OR type new).
+        - **Fields**: Amount, Label, Date.
+    - Connect to `addTransaction` action.
+
+- [ ] **Step 5.3**: UI - Budget Column Container.
+    - Refactor `src/components/dashboard/Budget.tsx`.
+    - Fetch data using `getBudgetTransactions`.
+    - Separate data into `incomeCategories` and `expenseCategories`.
+    - Render two sections:
+        - `<BudgetSection title="Income" categories={incomeCategories} />`
+        - `<BudgetSection title="Expenses" categories={expenseCategories} />`
+
+- [ ] **Step 5.4**: UI - Recursive Display Components.
+    - Create `BudgetSection.tsx` and `CategoryItem.tsx`.
+    - **UI Pattern**:
+        - **Category Header**: Shows Label (e.g., "Housing") + Total Amount (Sum of transactions).
+        - **Accordion/List**: Shows individual transactions (Label | Date | Amount).
 
 ## Phase 6: The "Brain" - Analytics (Column 2)
 *Focus: Filling the center column with insights derived from the data in Cols 1 & 3.*
