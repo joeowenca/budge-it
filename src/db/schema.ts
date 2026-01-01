@@ -1,5 +1,7 @@
-import { integer, pgTable, serial, text, timestamp, numeric, boolean } from "drizzle-orm/pg-core";
+import { integer, pgTable, pgEnum, serial, text, timestamp, numeric, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "purchase"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -15,7 +17,7 @@ export const users = pgTable("users", {
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  type: text("type").notNull(),
+  type: transactionTypeEnum("type").notNull(),
   label: text("label").notNull(),
   color: text("color").default("#000000"),
   isArchived: boolean("is_archived").default(false),
@@ -26,7 +28,7 @@ export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   categoryId: integer("category_id").references(() => categories.id).notNull(),
-  type: text("type").notNull(),
+  type: transactionTypeEnum("type").notNull(),
   label: text("label"),
   amount: integer("amount").notNull(),
   date: timestamp("date").notNull(),

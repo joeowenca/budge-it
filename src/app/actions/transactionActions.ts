@@ -3,15 +3,15 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, transactions } from "@/db/schema";
+import { categories, transactions, transactionTypeEnum } from "@/db/schema";
 import { checkUser } from "@/lib/checkUser";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 const addTransactionSchema = z.object({
   amount: z.number().positive().transform((val) => Math.round(val * 100)),
   label: z.string().min(1),
   categoryLabel: z.string().min(1),
-  type: z.enum(["income", "expense", "purchase"]),
+  type: z.enum(transactionTypeEnum.enumValues),
   date: z.date(),
 });
 
@@ -72,5 +72,26 @@ export async function addTransaction(input: z.infer<typeof addTransactionSchema>
 
   // Refresh: Call revalidatePath('/') at the end
   revalidatePath("/");
+}
+
+export async function getBudgetTransactions() {
+  const user = await checkUser();
+  if (!user) {
+    throw new Error("Unauthorized: User must be logged in");
+  }
+
+  const categoriesWithTransactions = await db.query.categories.findMany({
+    where: and(
+      eq(categories.userId, user.id),
+      inArray(categories.type, ["income", "expense"])
+    ),
+    with: {
+        transactions: {
+          orderBy: (transactions, { desc }) => [desc(transactions.date)],
+        },
+      },
+  });
+
+  return categoriesWithTransactions;
 }
 
