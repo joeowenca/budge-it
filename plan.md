@@ -16,7 +16,7 @@
 - [x] **Step 1.4**: Generate and Push Migrations.
     - Run `npx drizzle-kit generate` and `npx drizzle-kit push`.
 
-## Phase 2: Authentication & User Sync (Critical)
+## Phase 2: Authentication & User Sync
 - [x] **Step 2.1**: Install & Configure Clerk.
     - Install `@clerk/nextjs`.
     - Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` to `.env.local`.
@@ -25,48 +25,60 @@
 - [x] **Step 2.2**: Create the "User Sync" Utility.
     - Create `src/lib/checkUser.ts`.
     - Logic: Get Clerk user -> Check DB for `clerkId` -> If missing, Insert into DB -> Return DB User Object.
-- [x] **Step 2.3**: Verify Auth.
+- [x] **Step 2.3**: Verify Auth & DB Sync.
     - Create a temporary call in `src/app/page.tsx` to `checkUser()` and log the result to ensure users are being saved to Postgres.
 
 ## Phase 3: UI Shell & Navigation
 - [x] **Step 3.1**: Initialize Shadcn UI.
     - Run `npx shadcn@latest init`.
     - Add components: `button`, `input`, `label`, `card`, `sheet` (mobile menu), `dialog`, `select`.
-- [x] **Step 3.2**: Create App Layout.
+- [x] **Step 3.2**: Create App Navbar.
     - Create `src/components/Navbar.tsx` (or Sidebar).
     - Ensure it is responsive.
     - Add a "UserButton" from Clerk.
 
-## Phase 4: Transactions (CRUD)
-- [ ] **Step 4.1**: Create Server Actions.
-    - Create `src/app/actions/addTransaction.ts`.
-    - Use Zod to validate input (amount, description, date, category, type).
-    - Use `checkUser()` to get the correct `userId`.
-    - Revalidate path `/`.
-- [ ] **Step 4.2**: Create "Add Transaction" Component.
-    - Create `src/components/AddTransactionDialog.tsx`.
-    - Use Shadcn Dialog + React Hook Form + Zod Resolver.
-- [ ] **Step 4.3**: Create Transaction List.
-    - Fetch transactions in `src/app/page.tsx` (Server Component).
-    - Pass data to `src/components/TransactionList.tsx`.
-    - Format currency and dates properly.
-- [ ] **Step 4.4**: Delete Transaction.
-    - Add `deleteTransaction` Server Action.
-    - Add "Delete" button to the Transaction List rows.
+## Phase 4: Dashboard Architecture & Data Entry (Columns 1 & 3)
+*Focus: Setting up the responsive grid and enabling data entry for Income (Col 1) and Expenses (Col 3).*
 
-## Phase 5: Dashboard Analytics
-- [ ] **Step 5.1**: Backend Aggregation.
-    - Create `src/app/actions/getIncomeExpense.ts`.
-    - Calculate: Total Income, Total Expense, Net Balance using Drizzle SQL sum().
-- [ ] **Step 5.2**: Visualizations.
-    - Install `recharts`.
-    - Create a Bar Chart for "Income vs Expense".
-    - Create a Donut Chart for "Spending by Category".
-- [ ] **Step 5.3**: Dashboard Assembly.
-    - Display Summary Cards (Balance, Income, Expense) at the top.
-    - Display Charts in the middle.
-    - Display Recent Transactions at the bottom.
+- [ ] **Step 4.1**: The Responsive Grid Shell.
+    - Create `src/app/page.tsx` with the **3-Column Layout** for Desktop:
+        - **Col 1:** Budget
+        - **Col 2:** Insights
+        - **Col 3:** Purchases
+    -Each column should be its own component stored in `src/components` but rendered on `src/app/page.tsx`
+    - Implement **Mobile View**:
+        - Reduce the 3-column layout down to 1-column, where at the top of this large singular mobile view column, we have an overview with essential actions like adding purchases and displaying helpful data/information.
+- [ ] **Step 4.2**: Column 3 - Purchase Log (Expenses).
+    - **Backend**: Create `addTransaction` Server Action (for expenses).
+    - **UI**: Create `TransactionList` component.
+        - Scrollable feed of recent purchases.
+        - Filter by Date / Sort by Amount.
+    - **UI**: Create `AddExpenseForm` (Small inline form or Drawer).
+- [ ] **Step 4.3**: Column 1 - Budget & Income Manager.
+    - **Backend**: Create `addIncome` Server Action.
+    - **UI**: Create `IncomeManager` Component (Top of Col 1).
+        - Add Income Categories (e.g., "Salary", "Gift").
+        - Log Income Events (e.g., "Sept 15 Paycheque").
+    - **UI**: Create `BudgetTargets` Component (Bottom of Col 1).
+        - Visual progress bars for expense categories (e.g., "Groceries: $150/$400").
 
-## Phase 6: Polish
-- [ ] **Step 6.1**: Add "Edit Transaction" functionality.
-- [ ] **Step 6.2**: Implement a "Month Picker" to filter the dashboard by date.
+## Phase 5: The "Brain" - Analytics (Column 2)
+*Focus: Filling the center column with insights derived from the data in Cols 1 & 3.*
+
+- [ ] **Step 5.1**: Data Aggregation.
+    - Create `getFinancialInsights` Server Action.
+    - Calculate: Total Income, Total Expenses, Net Balance.
+    - Group data by Category for charts.
+- [ ] **Step 5.2**: Center Column Visualizations.
+    - **Pie Chart**: "Expense Breakdown" (Housing vs Food vs Fun).
+    - **Bar/Area Chart**: "3-Month Trend" (Income vs Expense over time).
+    - **Net Logic**: "Available to Spend" (Income - Expenses).
+
+## Phase 6: Polish & Refinement
+- [ ] **Step 6.1**: Mobile Optimization.
+    - Ensure the "Quick Add" button on mobile works smoothly.
+    - Check touch targets for scrolling lists.
+- [ ] **Step 6.2**: Date Filtering.
+    - Add a "Month Picker" to the top of the dashboard to filter all 3 columns by a specific month.
+- [ ] **Step 6.3**: Empty States.
+    - Design friendly "No transactions yet" states for the columns.

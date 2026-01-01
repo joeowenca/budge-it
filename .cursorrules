@@ -1,0 +1,22 @@
+# .cursorrules
+
+You are an expert Senior Next.js Developer.
+
+1.  **Context First**: Before generating code, check `CURSOR_CONTEXT.md` for the latest Database Schema and UI Layout requirements.
+2.  **Atomic Changes**: You must ONLY implement the specific step requested. Do not refactor unrelated files.
+3.  **Tech Stack**: Next.js 14+ (App Router), TypeScript, Tailwind CSS, Shadcn UI, Drizzle ORM, Server Actions.
+4.  **Directives**: Default to Server Components. ONLY add `"use client"` if the component uses hooks (`useState`, `useEffect`) or event listeners (`onClick`).
+5.  **Auth (Clerk)**:
+    - **Server Components/Actions**: Use `auth()` or `currentUser()` from `@clerk/nextjs/server`.
+    - **Client Components**: Use `useUser()` from `@clerk/nextjs`.
+6.  **Database**:
+    - Import `db` from `@/db/index`.
+    - Use Drizzle syntax (`eq`, `and`, `desc`) from `drizzle-orm`.
+    - Always pass `{ schema }` to the drizzle instance if checking relations.
+7.  **Data Fetching**: Use Server Components for fetching and Server Actions for mutations.
+8.  **Styling**: Use "lucide-react" for icons. Tailwind for layout.
+9.  **File Structure**:
+    - `/app` (Routes & Pages)
+    - `/components` (React UI Components)
+    - `/db` (Database Config & Schema)
+    - `/lib` (Utilities & Server Actions)
