@@ -1,4 +1,4 @@
-import { integer, pgTable, pgEnum, serial, text, timestamp, numeric, boolean } from "drizzle-orm/pg-core";
+import { integer, pgTable, pgEnum, serial, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "purchase"]);

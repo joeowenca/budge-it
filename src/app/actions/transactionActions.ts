@@ -16,17 +16,13 @@ const addTransactionSchema = z.object({
 });
 
 export async function addTransaction(input: z.infer<typeof addTransactionSchema>) {
-  // Validate inputs
   const validatedInput = addTransactionSchema.parse(input);
 
-  // Check authentication
   const user = await checkUser();
   if (!user) {
     throw new Error("Unauthorized: User must be logged in");
   }
 
-  // Category Logic (Upsert)
-  // Check if a category exists for this user with the same label and type
   const existingCategories = await db
     .select()
     .from(categories)
@@ -44,10 +40,8 @@ export async function addTransaction(input: z.infer<typeof addTransactionSchema>
   let categoryId: number;
 
   if (existingCategory) {
-    // If Yes: Use its ID
     categoryId = existingCategory.id;
   } else {
-    // If No: Insert a new category and use the new ID
     const newCategory = await db
       .insert(categories)
       .values({
@@ -60,7 +54,6 @@ export async function addTransaction(input: z.infer<typeof addTransactionSchema>
     categoryId = newCategory[0].id;
   }
 
-  // Transaction Logic: Insert the transaction with the resolved categoryId
   await db.insert(transactions).values({
     userId: user.id,
     categoryId: categoryId,
@@ -70,7 +63,6 @@ export async function addTransaction(input: z.infer<typeof addTransactionSchema>
     date: validatedInput.date,
   });
 
-  // Refresh: Call revalidatePath('/') at the end
   revalidatePath("/");
 }
 
