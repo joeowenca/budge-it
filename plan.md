@@ -53,7 +53,7 @@
 ## Phase 5: Budget Component & Transaction Management
 *Focus: Turning the "Budget" column into a functional manager using Relational Data.*
 
-- [ ] **Step 5.1**: Backend - Database Relations & Actions.
+- [x] **Step 5.1**: Backend - Database Relations & Actions.
     - **Update Schema**: Edit `src/db/schema.ts` to add `relations`.
         - Define `usersRelations` (one-to-many transactions, one-to-many categories).
         - Define `categoriesRelations` (one-to-many transactions).
