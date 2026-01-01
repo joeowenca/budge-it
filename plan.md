@@ -25,7 +25,7 @@
 - [x] **Step 2.2**: Create the "User Sync" Utility.
     - Create `src/lib/checkUser.ts`.
     - Logic: Get Clerk user -> Check DB for `clerkId` -> If missing, Insert into DB -> Return DB User Object.
-- [ ] **Step 2.3**: Verify Auth.
+- [x] **Step 2.3**: Verify Auth.
     - Create a temporary call in `src/app/page.tsx` to `checkUser()` and log the result to ensure users are being saved to Postgres.
 
 ## Phase 3: UI Shell & Navigation
