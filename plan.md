@@ -17,7 +17,7 @@
     - Run `npx drizzle-kit generate` and `npx drizzle-kit push`.
 
 ## Phase 2: Authentication & User Sync (Critical)
-- [ ] **Step 2.1**: Install & Configure Clerk.
+- [x] **Step 2.1**: Install & Configure Clerk.
     - Install `@clerk/nextjs`.
     - Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` to `.env.local`.
     - Wrap `src/app/layout.tsx` in `<ClerkProvider>`.
