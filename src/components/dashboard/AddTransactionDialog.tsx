@@ -33,6 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { cn } from "@/lib/utils"
 
 // Zod schemas for each transaction type
@@ -59,7 +60,19 @@ type PurchaseFormValues = z.infer<typeof purchaseSchema>
 type ExpenseFormValues = z.infer<typeof expenseSchema>
 type IncomeFormValues = z.infer<typeof incomeSchema>
 
-export function AddTransactionDialog() {
+export interface Category {
+  id: number
+  type: "income" | "expense" | "purchase"
+  label: string
+}
+
+interface AddTransactionDialogProps {
+  existingCategories?: Category[]
+}
+
+export function AddTransactionDialog({
+  existingCategories = [],
+}: AddTransactionDialogProps) {
   const [open, setOpen] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("purchase")
 
@@ -87,7 +100,7 @@ export function AddTransactionDialog() {
 
   // Expense form
   const expenseForm = useForm<ExpenseFormValues>({
-    resolver: zodResolver(expenseSchema),
+    resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
       category: "",
       label: "",
@@ -97,7 +110,7 @@ export function AddTransactionDialog() {
 
   // Income form
   const incomeForm = useForm<IncomeFormValues>({
-    resolver: zodResolver(incomeSchema),
+    resolver: zodResolver(incomeSchema) as any,
     defaultValues: {
       category: "",
       label: "",
@@ -118,6 +131,16 @@ export function AddTransactionDialog() {
   const onIncomeSubmit = async (data: IncomeFormValues) => {
     console.log("Income data:", data)
     handleOpenChange(false)
+  }
+
+  // Filter categories by transaction type
+  const getFilteredCategories = (type: "income" | "expense" | "purchase"): ComboboxOption[] => {
+    return existingCategories
+      .filter((cat) => cat.type === type)
+      .map((cat) => ({
+        value: cat.label,
+        label: cat.label,
+      }))
   }
 
   return (
@@ -154,7 +177,16 @@ export function AddTransactionDialog() {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter category" {...field} />
+                        <Combobox
+                          options={getFilteredCategories("purchase")}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select or create category"
+                          searchPlaceholder="Search categories..."
+                          emptyText="No categories found."
+                          createText={(input) => `Create "${input}"`}
+                          allowCreate={true}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -268,7 +300,16 @@ export function AddTransactionDialog() {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter category" {...field} />
+                        <Combobox
+                          options={getFilteredCategories("expense")}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select or create category"
+                          searchPlaceholder="Search categories..."
+                          emptyText="No categories found."
+                          createText={(input) => `Create "${input}"`}
+                          allowCreate={true}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -343,7 +384,16 @@ export function AddTransactionDialog() {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter category" {...field} />
+                        <Combobox
+                          options={getFilteredCategories("income")}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select or create category"
+                          searchPlaceholder="Search categories..."
+                          emptyText="No categories found."
+                          createText={(input) => `Create "${input}"`}
+                          allowCreate={true}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
