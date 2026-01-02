@@ -10,3 +10,6 @@
 
 ## 2. Database Schema (`src/db/schema.ts`)
 *Reference this file for all DB operations:*
+
+## 3. App functionality
+- **Summary** A simple budget app for tracking your income, expenses, and spending. Expenses are subtracted from Income. Expenses can also include savings and spending money.

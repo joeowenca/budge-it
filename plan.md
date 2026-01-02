@@ -69,9 +69,27 @@
 - [ ] **Step 5.2**: UI - The "Add Transaction" Dialog.
     - Create `src/components/dashboard/AddTransactionDialog.tsx`.
     - Features:
-        - **Type Toggle**: Income vs Expense.
-        - **Category Input**: Combobox (Select existing OR type new).
-        - **Fields**: Amount, Label, Date.
+        - **Tabs** 3 tabs in this order to create the following items: Purchase, Expense, Income
+            - **Purchase tab** 
+                -Has the following fields:
+                    - Category (Combobox: Select existing category with the type "purchase" or create a new category with the type "purchase")
+                    - Amount
+                    - Date
+                    - Memo
+                - Used to create a transaction with the type "Purchase" under the selected category
+            - **Expense tab** 
+                - Has the following fields:
+                    - Category (Combobox: Select existing category with the type "expense" or create a new category with the type "expense")
+                    - Label
+                    - Amount
+                    - (No date field yet, will just consider all expenses as monthly)
+            - **Income tab** has the following fields:
+                - Has the following fields:
+                    - Category (Combobox: Select existing category with the type "income" or create a new category with the type "income")
+                    - Label
+                    - Amount
+                    - (No date field yet, will just consider all income as monthly)
+        - **Add button** a button at the bottom of the dialog to create the transaction and/or category based on the tab selected and fields completed.
     - Connect to `addTransaction` action.
 
 - [ ] **Step 5.3**: UI - Budget Column Container.
