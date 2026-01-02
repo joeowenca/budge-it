@@ -117,7 +117,7 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" style={{ width: "var(--radix-popover-trigger-width)" }} className="p-0">
+      <PopoverContent style={{ width: "var(--radix-popover-trigger-width)" }} className="p-0">
         <Command>
           <CommandInput
             placeholder={searchPlaceholder}
