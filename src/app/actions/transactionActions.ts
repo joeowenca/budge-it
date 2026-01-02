@@ -87,3 +87,73 @@ export async function getBudgetTransactions() {
   return categoriesWithTransactions;
 }
 
+export async function getCategories() {
+  const user = await checkUser();
+  if (!user) {
+    throw new Error("Unauthorized: User must be logged in");
+  }
+
+  const userCategories = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.userId, user.id));
+
+  return userCategories.map((cat) => ({
+    id: cat.id,
+    type: cat.type as "income" | "expense" | "purchase",
+    label: cat.label,
+  }));
+}
+
+const addCategorySchema = z.object({
+  label: z.string().min(1),
+  type: z.enum(transactionTypeEnum.enumValues),
+});
+
+export async function addCategory(input: z.infer<typeof addCategorySchema>) {
+  const validatedInput = addCategorySchema.parse(input);
+
+  const user = await checkUser();
+  if (!user) {
+    throw new Error("Unauthorized: User must be logged in");
+  }
+
+  // Check if category already exists
+  const existingCategories = await db
+    .select()
+    .from(categories)
+    .where(
+      and(
+        eq(categories.userId, user.id),
+        eq(categories.label, validatedInput.label),
+        eq(categories.type, validatedInput.type)
+      )
+    )
+    .limit(1);
+
+  if (existingCategories.length > 0) {
+    // Category already exists, return it
+    return {
+      id: existingCategories[0].id,
+      type: existingCategories[0].type as "income" | "expense" | "purchase",
+      label: existingCategories[0].label,
+    };
+  }
+
+  // Create new category
+  const newCategory = await db
+    .insert(categories)
+    .values({
+      userId: user.id,
+      label: validatedInput.label,
+      type: validatedInput.type,
+    })
+    .returning();
+
+  return {
+    id: newCategory[0].id,
+    type: newCategory[0].type as "income" | "expense" | "purchase",
+    label: newCategory[0].label,
+  };
+}
+

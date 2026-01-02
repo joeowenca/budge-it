@@ -66,12 +66,30 @@
         - Options: `with: { transactions: { orderBy: (t, { desc }) => [desc(t.date)] } }`.
         - Result: Returns Categories with their Transactions nested inside, sorted by newest first.
 
-- [ ] **Step 5.2**: UI - The "Add Transaction" Dialog.
+- [x] **Step 5.2**: UI - The "Add Transaction" Dialog.
     - Create `src/components/dashboard/AddTransactionDialog.tsx`.
     - Features:
-        - **Type Toggle**: Income vs Expense.
-        - **Category Input**: Combobox (Select existing OR type new).
-        - **Fields**: Amount, Label, Date.
+        - **Tabs** 3 tabs in this order to create the following items: Purchase, Expense, Income
+            - **Purchase tab** 
+                -Has the following fields:
+                    - Category (Combobox: Select existing category with the type "purchase" or create a new category with the type "purchase")
+                    - Amount
+                    - Date
+                    - Memo
+                - Used to create a transaction with the type "Purchase" under the selected category
+            - **Expense tab** 
+                - Has the following fields:
+                    - Category (Combobox: Select existing category with the type "expense" or create a new category with the type "expense")
+                    - Label
+                    - Amount
+                    - (No date field yet, will just consider all expenses as monthly)
+            - **Income tab** has the following fields:
+                - Has the following fields:
+                    - Category (Combobox: Select existing category with the type "income" or create a new category with the type "income")
+                    - Label
+                    - Amount
+                    - (No date field yet, will just consider all income as monthly)
+        - **Add button** a button at the bottom of the dialog to create the transaction and/or category based on the tab selected and fields completed.
     - Connect to `addTransaction` action.
 
 - [ ] **Step 5.3**: UI - Budget Column Container.
@@ -88,23 +106,38 @@
         - **Category Header**: Shows Label (e.g., "Housing") + Total Amount (Sum of transactions).
         - **Accordion/List**: Shows individual transactions (Label | Date | Amount).
 
-## Phase 6: The "Brain" - Analytics (Column 2)
+- [ ] **Step 5.6**: Finishing touches
+    - Change button and highlight colors to blue (tailwind: blue-600)
+    - Make the dialog always have the same top position when changing tabs even if there are more fields. The bottom should just expand, but the top stays in the same place. This to help with changing tabs so the tab buttons never move.
+    - Amount should be written to the database as an integer (1234), not numeric (1234.00)
+
+## Phase 6: Editing the budget manager
+- [ ] **Step 6.1**: Ability to edit transactions and categories
+    - Ability to archive transactions
+    - Ability to archive categories which as a result archives all transactions within the category
+    - Ability to rename transactions
+    - Ability to edit the amount of transactions
+    - Ability to rename categories
+    - Ability to reorder categories
+    - Ability to reorder transactions 
+
+## Phase 7: The "Brain" - Analytics (Column 2)
 *Focus: Filling the center column with insights derived from the data in Cols 1 & 3.*
 
-- [ ] **Step 6.1**: Data Aggregation.
+- [ ] **Step 7.1**: Data Aggregation.
     - Create `getFinancialInsights` Server Action.
     - Calculate: Total Income, Total Expenses, Net Balance.
     - Group data by Category for charts.
-- [ ] **Step 6.2**: Center Column Visualizations.
+- [ ] **Step 7.2**: Center Column Visualizations.
     - **Pie Chart**: "Expense Breakdown" (Housing vs Food vs Fun).
     - **Bar/Area Chart**: "3-Month Trend" (Income vs Expense over time).
     - **Net Logic**: "Available to Spend" (Income - Expenses).
 
-## Phase 7: Polish & Refinement
-- [ ] **Step 7.1**: Mobile Optimization.
+## Phase 8: Polish & Refinement
+- [ ] **Step 8.1**: Mobile Optimization.
     - Ensure the "Quick Add" button on mobile works smoothly.
     - Check touch targets for scrolling lists.
-- [ ] **Step 7.2**: Date Filtering.
+- [ ] **Step 8.2**: Date Filtering.
     - Add a "Month Picker" to the top of the dashboard to filter all 3 columns by a specific month.
-- [ ] **Step 7.3**: Empty States.
+- [ ] **Step 8.3**: Empty States.
     - Design friendly "No transactions yet" states for the columns.
