@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/popover"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { cn } from "@/lib/utils"
+import { addTransaction, getCategories, addCategory } from "@/app/actions/transactionActions"
 
 // Zod schemas for each transaction type
 const purchaseSchema = z.object({
@@ -66,15 +67,24 @@ export interface Category {
   label: string
 }
 
-interface AddTransactionDialogProps {
-  existingCategories?: Category[]
-}
-
-export function AddTransactionDialog({
-  existingCategories = [],
-}: AddTransactionDialogProps) {
+export function AddTransactionDialog() {
   const [open, setOpen] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("purchase")
+  const [existingCategories, setExistingCategories] = React.useState<Category[]>([])
+  const [isLoading, setIsLoading] = React.useState(false)
+
+  // Fetch categories when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      getCategories()
+        .then((categories) => {
+          setExistingCategories(categories)
+        })
+        .catch((error) => {
+          console.error("Error fetching categories:", error)
+        })
+    }
+  }, [open])
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen)
@@ -84,6 +94,7 @@ export function AddTransactionDialog({
       expenseForm.reset()
       incomeForm.reset()
       setActiveTab("purchase")
+      setIsLoading(false)
     }
   }
 
@@ -119,18 +130,75 @@ export function AddTransactionDialog({
   })
 
   const onPurchaseSubmit = async (data: PurchaseFormValues) => {
-    console.log("Purchase data:", data)
-    handleOpenChange(false)
+    setIsLoading(true)
+    try {
+      await addTransaction({
+        amount: data.amount,
+        label: data.memo || data.category, // Use memo as label, fallback to category
+        categoryLabel: data.category,
+        type: "purchase",
+        date: data.date,
+      })
+      handleOpenChange(false)
+    } catch (error) {
+      console.error("Error adding purchase:", error)
+      setIsLoading(false)
+    }
   }
 
   const onExpenseSubmit = async (data: ExpenseFormValues) => {
-    console.log("Expense data:", data)
-    handleOpenChange(false)
+    setIsLoading(true)
+    try {
+      await addTransaction({
+        amount: data.amount,
+        label: data.label,
+        categoryLabel: data.category,
+        type: "expense",
+        date: new Date(), // Default to today for expenses
+      })
+      handleOpenChange(false)
+    } catch (error) {
+      console.error("Error adding expense:", error)
+      setIsLoading(false)
+    }
   }
 
   const onIncomeSubmit = async (data: IncomeFormValues) => {
-    console.log("Income data:", data)
-    handleOpenChange(false)
+    setIsLoading(true)
+    try {
+      await addTransaction({
+        amount: data.amount,
+        label: data.label,
+        categoryLabel: data.category,
+        type: "income",
+        date: new Date(), // Default to today for income
+      })
+      handleOpenChange(false)
+    } catch (error) {
+      console.error("Error adding income:", error)
+      setIsLoading(false)
+    }
+  }
+
+  // Handler for creating a new category
+  const handleCreateCategory = async (categoryLabel: string, type: "income" | "expense" | "purchase") => {
+    try {
+      const newCategory = await addCategory({
+        label: categoryLabel,
+        type,
+      })
+      // Add the new category to the existing categories list
+      setExistingCategories((prev) => {
+        // Check if category already exists in the list
+        if (prev.some((cat) => cat.id === newCategory.id)) {
+          return prev
+        }
+        return [...prev, newCategory]
+      })
+    } catch (error) {
+      console.error("Error creating category:", error)
+      throw error
+    }
   }
 
   // Filter categories by transaction type
@@ -186,6 +254,7 @@ export function AddTransactionDialog({
                           emptyText="No categories found."
                           createText={(input) => `Create "${input}"`}
                           allowCreate={true}
+                          onCreate={(value) => handleCreateCategory(value, "purchase")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -275,9 +344,9 @@ export function AddTransactionDialog({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={purchaseForm.formState.isSubmitting}
+                    disabled={purchaseForm.formState.isSubmitting || isLoading}
                   >
-                    {purchaseForm.formState.isSubmitting
+                    {purchaseForm.formState.isSubmitting || isLoading
                       ? "Submitting..."
                       : "Add Purchase"}
                   </Button>
@@ -309,6 +378,7 @@ export function AddTransactionDialog({
                           emptyText="No categories found."
                           createText={(input) => `Create "${input}"`}
                           allowCreate={true}
+                          onCreate={(value) => handleCreateCategory(value, "expense")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -359,9 +429,9 @@ export function AddTransactionDialog({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={expenseForm.formState.isSubmitting}
+                    disabled={expenseForm.formState.isSubmitting || isLoading}
                   >
-                    {expenseForm.formState.isSubmitting
+                    {expenseForm.formState.isSubmitting || isLoading
                       ? "Submitting..."
                       : "Add Expense"}
                   </Button>
@@ -393,6 +463,7 @@ export function AddTransactionDialog({
                           emptyText="No categories found."
                           createText={(input) => `Create "${input}"`}
                           allowCreate={true}
+                          onCreate={(value) => handleCreateCategory(value, "income")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -443,9 +514,9 @@ export function AddTransactionDialog({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={incomeForm.formState.isSubmitting}
+                    disabled={incomeForm.formState.isSubmitting || isLoading}
                   >
-                    {incomeForm.formState.isSubmitting
+                    {incomeForm.formState.isSubmitting || isLoading
                       ? "Submitting..."
                       : "Add Income"}
                   </Button>

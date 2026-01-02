@@ -33,6 +33,7 @@ interface ComboboxProps {
   emptyText?: string
   createText?: (input: string) => string
   allowCreate?: boolean
+  onCreate?: (value: string) => Promise<void> | void
 }
 
 export function Combobox({
@@ -44,22 +45,32 @@ export function Combobox({
   emptyText = "No results found.",
   createText = (input: string) => `Create "${input}"`,
   allowCreate = true,
+  onCreate,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState("")
 
   const selectedOption = options.find((option) => option.value === value)
 
+  // Include current value as an option if it exists but isn't in the options list
+  const optionsWithCurrentValue = React.useMemo(() => {
+    if (!value || selectedOption) {
+      return options
+    }
+    // Add current value as a temporary option
+    return [...options, { value, label: value }]
+  }, [options, value, selectedOption])
+
   // Filter options based on search
   const filteredOptions = React.useMemo(() => {
     if (!searchValue.trim()) {
-      return options
+      return optionsWithCurrentValue
     }
     const lowerSearch = searchValue.toLowerCase()
-    return options.filter((option) =>
+    return optionsWithCurrentValue.filter((option) =>
       option.label.toLowerCase().includes(lowerSearch)
     )
-  }, [options, searchValue])
+  }, [optionsWithCurrentValue, searchValue])
 
   // Check if we should show create option
   const shouldShowCreate = React.useMemo(() => {
@@ -67,10 +78,10 @@ export function Combobox({
       return false
     }
     const lowerSearch = searchValue.toLowerCase()
-    return !options.some(
+    return !optionsWithCurrentValue.some(
       (option) => option.label.toLowerCase() === lowerSearch
     )
-  }, [options, searchValue, allowCreate])
+  }, [optionsWithCurrentValue, searchValue, allowCreate])
 
   const handleSelect = (selectedValue: string) => {
     if (selectedValue === value) {
@@ -82,8 +93,13 @@ export function Combobox({
     setSearchValue("")
   }
 
-  const handleCreate = () => {
-    onValueChange(searchValue.trim())
+  const handleCreate = async () => {
+    // Use searchValue directly to preserve the exact input (including spaces)
+    const newValue = searchValue.trim()
+    if (onCreate) {
+      await onCreate(newValue)
+    }
+    onValueChange(newValue)
     setOpen(false)
     setSearchValue("")
   }
@@ -97,7 +113,7 @@ export function Combobox({
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {selectedOption ? selectedOption.label : placeholder}
+          {selectedOption ? selectedOption.label : (value || placeholder)}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -128,6 +144,8 @@ export function Combobox({
               ))}
               {shouldShowCreate && (
                 <CommandItem
+                  key={`create-${searchValue.trim()}`}
+                  value={searchValue.trim()}
                   onSelect={handleCreate}
                   className="text-primary font-medium"
                 >
