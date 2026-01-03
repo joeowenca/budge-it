@@ -109,6 +109,13 @@
     - A collapsed category looks like "CategoryName >    $1234.56" where it's just the category name, a chevron pointing right, and the total amount on the right-side of the line item. 
     - An expanded category looks like "CategoryName v        " where it's just the category name, a chevron point down, and no total amount. Instead, the total is calculated at the bottom below all transactions like a tally sheet.
 
+- [ ] **Step 5.5**: UI - Make the budget column look nice
+    - Improve the category visuals
+        - Truncate category names that are too long with '...'
+    - Improve the transaction visuals
+        - Truncate transaction names that are too long with '...'
+    - Add a 'Net' section at the top that shows total income (green) subtracted by total expenses (red)
+
 ## Phase 6: Editing the budget manager
 - [ ] **Step 6.1**: Ability to edit transactions and categories
     - Ability to archive transactions

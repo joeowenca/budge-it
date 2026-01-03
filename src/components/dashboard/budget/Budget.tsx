@@ -45,13 +45,13 @@ export default async function Budget() {
   }));
 
   return (
-    <div className="h-full flex flex-col p-6 border rounded-lg shadow bg-card">
-      <div className="flex-none mb-4">
-        <h2 className="text-xl font-semibold mb-4">Budget</h2>
+    <div className="h-full flex flex-col">
+      <div className="flex-none">
+        <h2 className="text-3xl font-black p-5">Budget</h2>
       </div>
 
       <div className="flex-1 min-h-0">
-        <div className="h-full lg:overflow-y-auto">
+        <div className="h-full lg:overflow-y-auto px-5 pb-5">
           <div className="space-y-6">
             <BudgetSection title="Income" categories={incomeCategoriesWithTransactions} />
             <BudgetSection title="Expenses" categories={expenseCategoriesWithTransactions} />

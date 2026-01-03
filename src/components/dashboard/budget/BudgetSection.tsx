@@ -33,8 +33,8 @@ export default function BudgetSection({ title, categories }: BudgetSectionProps)
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="space-y-2">
+      <h3 className="text-xl font-medium">{title}</h3>
       <div className="space-y-4">
         {categories.length === 0 ? (
           <p className="text-sm text-muted-foreground">No categories yet</p>
@@ -47,6 +47,7 @@ export default function BudgetSection({ title, categories }: BudgetSectionProps)
                 key={category.id}
                 category={category}
                 transactions={category.transactions}
+                title={title}
                 isExpanded={isExpanded}
                 onToggle={() => toggleCategory(category.id)}
               />

@@ -18,6 +18,7 @@ type Transaction = {
 interface BudgetCategoryProps {
   category: Category;
   transactions: Transaction[];
+  title: string;
   isExpanded: boolean;
   onToggle: () => void;
 }
@@ -30,35 +31,42 @@ function formatAmount(amount: number): string {
   }).format(amount / 100);
 }
 
+interface TotalAmountProps {
+  totalAmount: string;
+  title?: string;
+  isExpanded?: boolean;
+}
+
+function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
+  return (
+    <span className={`font-medium text-sm ml-4 px-2.5 py-1 ${title === "Income" ? "text-green-900 bg-green-600/10" : "text-blue-900 bg-primary/10"} rounded-full ${isExpanded && "invisible"}`}>
+      {totalAmount}
+    </span>
+  );
+}
+
 export function BudgetCategory({
   category,
   transactions,
+  title,
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
   const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_15px_rgba(0,0,0,0.1)] transition-colors">
       {/* Category Header - Clickable */}
       <div
-        className="p-3 bg-muted/50 rounded-md cursor-pointer hover:bg-muted/70 transition-colors"
+        className="cursor-pointer select-none"
         onClick={onToggle}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            <span className="font-medium">{category.label}</span>
+          <div className="flex flex-1 min-w-0 items-center gap-2">
+            <span className="font-medium truncate">{category.label}</span>
+            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-transform ${isExpanded ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
           </div>
-          {!isExpanded && (
-            <span className="text-sm font-semibold">
-              {formatAmount(totalAmount)}
-            </span>
-          )}
+          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
         </div>
       </div>
 
@@ -70,7 +78,7 @@ export function BudgetCategory({
               No transactions yet
             </p>
           ) : (
-            <div className="space-y-1 pl-3">
+            <div className="space-y-1 mt-3">
               {transactions.map((transaction) => (
                 <BudgetTransaction
                   key={transaction.id}
@@ -78,10 +86,10 @@ export function BudgetCategory({
                 />
               ))}
               {/* Total at bottom - Tally sheet style */}
-              <div className="p-2 bg-muted/30 rounded border-t-2 border-muted mt-2">
-                <div className="flex items-center justify-between font-semibold">
-                  <span>Total</span>
-                  <span>{formatAmount(totalAmount)}</span>
+              <div className="pt-1">
+                <div className="flex items-center justify-between mt-1">
+                  <span className="font-medium">Total</span>
+                  <TotalAmount title={title} totalAmount={formatAmount(totalAmount)} />
                 </div>
               </div>
             </div>

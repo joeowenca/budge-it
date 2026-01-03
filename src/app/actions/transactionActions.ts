@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { categories, transactions, transactionTypeEnum } from "@/db/schema";
 import { checkUser } from "@/lib/checkUser";
-import { eq, and, inArray, desc, gte, lte } from "drizzle-orm";
+import { eq, and, inArray, asc, gte, lte } from "drizzle-orm";
 
 const addTransactionSchema = z.object({
   amount: z.number()
@@ -135,7 +135,7 @@ export async function getTransactions(options?: GetTransactionsOptions) {
     .select()
     .from(transactions)
     .where(and(...conditions))
-    .orderBy(desc(transactions.date));
+    .orderBy(asc(transactions.date));
 
   return userTransactions.map((tx) => ({
     id: tx.id,
