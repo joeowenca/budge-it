@@ -8,7 +8,10 @@ import { checkUser } from "@/lib/checkUser";
 import { eq, and, inArray, desc, gte, lte } from "drizzle-orm";
 
 const addTransactionSchema = z.object({
-  amount: z.number().positive().transform((val) => Math.round(val * 100)),
+  amount: z.number()
+    .positive({ message: "Amount must be greater than 0" })
+    .max(1_000_000, "Amount must be less than $1,000,000")
+    .transform((val) => Math.round(val * 100)),
   label: z.string().min(1),
   categoryLabel: z.string().min(1),
   type: z.enum(transactionTypeEnum.enumValues),

@@ -102,8 +102,7 @@
         - getTransactions (contains filter options for type, categoryId, and dateRange)
         - getCategories (contains a filter option for type)
         - remove getBudgetCategories
-    - [ ] **Step 5.3.3** Fetch data for the Income BudgetSection using `getIncomeCategories`, then within each category, fetch the income transactions for that category using `getIncomeTransactions` and filtering the results for the corresponding categoryId and render them under that category
-    - [ ] **Step 5.3.4** Fetch data for the Expense BudgetSection using `getExpenseCategories`, then within each category, fetch the expense transactions for that category using `getExpenseTransactions` and filtering the results for the corresponding categoryId and render them under that category
+    - [x] **Step 5.3.3** Fetch data for the Income and Expense BudgetSection components using `getCategories` (filter for the types Income and Expense to display the correct categories for each section), then within each category, fetch the transactions for each category using `getTransactions` and filtering the results for the corresponding categoryId and type and render them under that category
 
 - [ ] **Step 5.4**: UI - Recursive Display Components.
     - Create `BudgetSection.tsx` and `CategoryItem.tsx`.

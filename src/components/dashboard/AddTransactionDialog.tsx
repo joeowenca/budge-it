@@ -37,10 +37,14 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { cn } from "@/lib/utils"
 import { addTransaction, getCategories, addCategory } from "@/app/actions/transactionActions"
 
-// Zod schemas for each transaction type
+const MAX_AMOUNT = 1_000_000;
+
 const purchaseSchema = z.object({
   category: z.string().min(1, "Category is required"),
-  amount: z.coerce.number().positive("Amount must be positive"),
+  amount: z
+    .coerce.number()
+    .positive("Amount must be positive")
+    .max(MAX_AMOUNT, `Amount cannot exceed $${MAX_AMOUNT}`),
   date: z.date(),
   memo: z.string().optional(),
 })
@@ -48,14 +52,20 @@ const purchaseSchema = z.object({
 const expenseSchema = z.object({
   category: z.string().min(1, "Category is required"),
   label: z.string().min(1, "Label is required"),
-  amount: z.coerce.number().positive("Amount must be positive"),
+  amount: z
+    .coerce.number()
+    .positive("Amount must be positive")
+    .max(MAX_AMOUNT, `Amount cannot exceed $${MAX_AMOUNT}`),
   date: z.date(),
 })
 
 const incomeSchema = z.object({
   category: z.string().min(1, "Category is required"),
   label: z.string().min(1, "Label is required"),
-  amount: z.coerce.number().positive("Amount must be positive"),
+  amount: z
+    .coerce.number()
+    .positive("Amount must be positive")
+    .max(MAX_AMOUNT, `Amount cannot exceed $${MAX_AMOUNT}`),
   date: z.date(),
 })
 
