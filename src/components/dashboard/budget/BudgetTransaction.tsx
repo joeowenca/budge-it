@@ -28,7 +28,7 @@ interface BudgetTransactionProps {
 
 export function BudgetTransaction({ transaction }: BudgetTransactionProps) {
   return (
-    <div className="p-2 bg-background/50 rounded border text-sm">
+    <div className="pl-2 py-1 pb-2 text-sm border-b-1">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="font-medium">{transaction.label || "No label"}</div>
@@ -38,7 +38,7 @@ export function BudgetTransaction({ transaction }: BudgetTransactionProps) {
             </div>
           )}
         </div>
-        <div className="font-medium ml-4">
+        <div className="font-medium ml-4 rounded-lg">
           {formatAmount(transaction.amount)}
         </div>
       </div>
