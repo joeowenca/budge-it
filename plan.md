@@ -104,11 +104,10 @@
         - remove getBudgetCategories
     - [x] **Step 5.3.3** Fetch data for the Income and Expense BudgetSection components using `getCategories` (filter for the types Income and Expense to display the correct categories for each section), then within each category, fetch the transactions for each category using `getTransactions` and filtering the results for the corresponding categoryId and type and render them under that category
 
-- [ ] **Step 5.4**: UI - Recursive Display Components.
-    - Create `BudgetSection.tsx` and `CategoryItem.tsx`.
-    - **UI Pattern**:
-        - **Category Header**: Shows Label (e.g., "Housing") + Total Amount (Sum of transactions).
-        - **Accordion/List**: Shows individual transactions (Label | Date | Amount).
+- [ ] **Step 5.4**: UI - collapsible categories
+    - Ability to collapse a category so no transactions within the category are visible
+    - A collapsed category looks like "CategoryName >    $1234.56" where it's just the category name, a chevron pointing right, and the total amount on the right-side of the line item. 
+    - An expanded category looks like "CategoryName v        " where it's just the category name, a chevron point down, and no total amount. Instead, the total is calculated at the bottom below all transactions like a tally sheet.
 
 ## Phase 6: Editing the budget manager
 - [ ] **Step 6.1**: Ability to edit transactions and categories
