@@ -111,7 +111,11 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className={cn(
+            "w-full justify-between",
+            !selectedOption && "text-muted-foreground hover:text-muted-foreground hover:shadow-lg",
+            open && "shadow-lg shadow-primary/20 border-1 border-primary"
+          )}
         >
           {selectedOption ? selectedOption.label : (value || placeholder)}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -147,7 +151,7 @@ export function Combobox({
                   key={`create-${searchValue.trim()}`}
                   value={searchValue.trim()}
                   onSelect={handleCreate}
-                  className="text-primary font-medium"
+                  className="text-primary! font-medium"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
                   {createText(searchValue.trim())}

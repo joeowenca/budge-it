@@ -49,27 +49,30 @@ const expenseSchema = z.object({
   category: z.string().min(1, "Category is required"),
   label: z.string().min(1, "Label is required"),
   amount: z.coerce.number().positive("Amount must be positive"),
+  date: z.date(),
 })
 
 const incomeSchema = z.object({
   category: z.string().min(1, "Category is required"),
   label: z.string().min(1, "Label is required"),
   amount: z.coerce.number().positive("Amount must be positive"),
+  date: z.date(),
 })
 
 type PurchaseFormValues = z.infer<typeof purchaseSchema>
 type ExpenseFormValues = z.infer<typeof expenseSchema>
 type IncomeFormValues = z.infer<typeof incomeSchema>
+type Tab = "purchase" | "expense" | "income"
 
 export interface Category {
   id: number
-  type: "income" | "expense" | "purchase"
+  type: Tab
   label: string
 }
 
 export function AddTransactionDialog() {
   const [open, setOpen] = React.useState(false)
-  const [activeTab, setActiveTab] = React.useState("purchase")
+  const [activeTab, setActiveTab] = React.useState<Tab>("purchase")
   const [existingCategories, setExistingCategories] = React.useState<Category[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
 
@@ -89,12 +92,14 @@ export function AddTransactionDialog() {
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen)
     if (!newOpen) {
-      // Reset all forms when dialog closes
-      purchaseForm.reset()
-      expenseForm.reset()
-      incomeForm.reset()
-      setActiveTab("purchase")
-      setIsLoading(false)
+      // Reset all forms after dialog closes
+      setTimeout(() => {
+        purchaseForm.reset()
+        expenseForm.reset()
+        incomeForm.reset()
+        setActiveTab("purchase")
+        setIsLoading(false)
+      }, 200);
     }
   }
 
@@ -116,6 +121,7 @@ export function AddTransactionDialog() {
       category: "",
       label: "",
       amount: 0,
+      date: new Date(),
     },
   })
 
@@ -126,8 +132,18 @@ export function AddTransactionDialog() {
       category: "",
       label: "",
       amount: 0,
+      date: new Date(),
     },
   })
+
+  // Form lookup
+  const formByTab = {
+    purchase: purchaseForm,
+    expense: expenseForm,
+    income: incomeForm,
+  } as const
+
+  const activeForm = formByTab[activeTab]
 
   const onPurchaseSubmit = async (data: PurchaseFormValues) => {
     setIsLoading(true)
@@ -224,7 +240,7 @@ export function AddTransactionDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Tab)} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="purchase">Purchase</TabsTrigger>
             <TabsTrigger value="expense">Expense</TabsTrigger>
@@ -235,6 +251,7 @@ export function AddTransactionDialog() {
           <TabsContent value="purchase">
             <Form {...purchaseForm}>
               <form
+                id="purchase-form"
                 onSubmit={purchaseForm.handleSubmit(onPurchaseSubmit)}
                 className="space-y-4"
               >
@@ -333,24 +350,6 @@ export function AddTransactionDialog() {
                     </FormItem>
                   )}
                 />
-
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={purchaseForm.formState.isSubmitting || isLoading}
-                  >
-                    {purchaseForm.formState.isSubmitting || isLoading
-                      ? "Submitting..."
-                      : "Add Purchase"}
-                  </Button>
-                </DialogFooter>
               </form>
             </Form>
           </TabsContent>
@@ -359,6 +358,7 @@ export function AddTransactionDialog() {
           <TabsContent value="expense">
             <Form {...expenseForm}>
               <form
+                id="expense-form"
                 onSubmit={expenseForm.handleSubmit(onExpenseSubmit)}
                 className="space-y-4"
               >
@@ -419,23 +419,44 @@ export function AddTransactionDialog() {
                   )}
                 />
 
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={expenseForm.formState.isSubmitting || isLoading}
-                  >
-                    {expenseForm.formState.isSubmitting || isLoading
-                      ? "Submitting..."
-                      : "Add Expense"}
-                  </Button>
-                </DialogFooter>
+                <FormField
+                  control={expenseForm.control as any}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </form>
             </Form>
           </TabsContent>
@@ -444,6 +465,7 @@ export function AddTransactionDialog() {
           <TabsContent value="income">
             <Form {...incomeForm}>
               <form
+                id="income-form"
                 onSubmit={incomeForm.handleSubmit(onIncomeSubmit)}
                 className="space-y-4"
               >
@@ -504,27 +526,66 @@ export function AddTransactionDialog() {
                   )}
                 />
 
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={incomeForm.formState.isSubmitting || isLoading}
-                  >
-                    {incomeForm.formState.isSubmitting || isLoading
-                      ? "Submitting..."
-                      : "Add Income"}
-                  </Button>
-                </DialogFooter>
+                <FormField
+                  control={incomeForm.control as any}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </form>
             </Form>
           </TabsContent>
         </Tabs>
+        <DialogFooter className="mt-2">
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => handleOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+              type="submit"
+              form={`${activeTab}-form`}
+              disabled={activeForm.formState.isSubmitting || isLoading}
+            >
+              {activeForm.formState.isSubmitting || isLoading
+                ? "Submitting..."
+                : `Add ${activeTab}`}
+            </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

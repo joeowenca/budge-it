@@ -108,6 +108,8 @@
 
 - [ ] **Step 5.6**: Finishing touches
     - Change button and highlight colors to blue (tailwind: blue-600)
+    - Anything clickable should change the cursor on hover
+    - Anything clickable should change color on hover
     - Make the dialog always have the same top position when changing tabs even if there are more fields. The bottom should just expand, but the top stays in the same place. This to help with changing tabs so the tab buttons never move.
     - Amount should be written to the database as an integer (1234), not numeric (1234.00)
 
