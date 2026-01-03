@@ -93,25 +93,28 @@
     - Connect to `addTransaction` action.
 
 - [ ] **Step 5.3**: UI - Budget Column Container.
-    - Refactor `src/components/dashboard/Budget.tsx`.
-    - Fetch data using `getBudgetTransactions`.
-    - Separate data into `incomeCategories` and `expenseCategories`.
-    - Render two sections:
+    - [x] **Step 5.3.1** Refactor `src/components/dashboard/Budget.tsx` to remove the 20 placeholder items, and add two new sections:
         - `<BudgetSection title="Income" categories={incomeCategories} />`
         - `<BudgetSection title="Expenses" categories={expenseCategories} />`
+    - [ ] **Step 5.3.2** Refactor `transactionActions.ts` to have the following functions:
+        - addTransaction (already exists)
+        - addCategory (already exists)
+        - getPurchaseCategories (needs to be created, only fetch categories with the type "Purchase")
+        - getExpenseCategories (needs to be created, only fetch categories with the type "Expense")
+        - getIncomeCategories (needs to be created, only fetch categories with the type "Income")
+        - getCategories (already exists, used to fetch all categories if needed)
+        - getPurchaseTransactions (needs to be created, only fetch transactions with the type "Purchase")
+        - getExpenseTransactions (needs to be created, only fetch transactions with the type "Expense")
+        - getIncomeTransactions (needs to be created, only fetch transactions with the type "Income")
+        - remove getBudgetCategories (this is too specific, and we can instead use getExpenseCategories and getIncomeCategories separately)
+    - [ ] **Step 5.3.3** Fetch data for the Income BudgetSection using `getIncomeCategories`, then within each category, fetch the income transactions for that category using `getIncomeTransactions` and filtering the results for the corresponding categoryId and render them under that category
+    - [ ] **Step 5.3.4** Fetch data for the Expense BudgetSection using `getExpenseCategories`, then within each category, fetch the expense transactions for that category using `getExpenseTransactions` and filtering the results for the corresponding categoryId and render them under that category
 
 - [ ] **Step 5.4**: UI - Recursive Display Components.
     - Create `BudgetSection.tsx` and `CategoryItem.tsx`.
     - **UI Pattern**:
         - **Category Header**: Shows Label (e.g., "Housing") + Total Amount (Sum of transactions).
         - **Accordion/List**: Shows individual transactions (Label | Date | Amount).
-
-- [ ] **Step 5.6**: Finishing touches
-    - Change button and highlight colors to blue (tailwind: blue-600)
-    - Anything clickable should change the cursor on hover
-    - Anything clickable should change color on hover
-    - Make the dialog always have the same top position when changing tabs even if there are more fields. The bottom should just expand, but the top stays in the same place. This to help with changing tabs so the tab buttons never move.
-    - Amount should be written to the database as an integer (1234), not numeric (1234.00)
 
 ## Phase 6: Editing the budget manager
 - [ ] **Step 6.1**: Ability to edit transactions and categories
