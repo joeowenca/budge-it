@@ -96,17 +96,12 @@
     - [x] **Step 5.3.1** Refactor `src/components/dashboard/Budget.tsx` to remove the 20 placeholder items, and add two new sections:
         - `<BudgetSection title="Income" categories={incomeCategories} />`
         - `<BudgetSection title="Expenses" categories={expenseCategories} />`
-    - [ ] **Step 5.3.2** Refactor `transactionActions.ts` to have the following functions:
+    - [x] **Step 5.3.2** Refactor `transactionActions.ts` to have the following functions:
         - addTransaction (already exists)
         - addCategory (already exists)
-        - getPurchaseCategories (needs to be created, only fetch categories with the type "Purchase")
-        - getExpenseCategories (needs to be created, only fetch categories with the type "Expense")
-        - getIncomeCategories (needs to be created, only fetch categories with the type "Income")
-        - getCategories (already exists, used to fetch all categories if needed)
-        - getPurchaseTransactions (needs to be created, only fetch transactions with the type "Purchase")
-        - getExpenseTransactions (needs to be created, only fetch transactions with the type "Expense")
-        - getIncomeTransactions (needs to be created, only fetch transactions with the type "Income")
-        - remove getBudgetCategories (this is too specific, and we can instead use getExpenseCategories and getIncomeCategories separately)
+        - getTransactions (contains filter options for type, categoryId, and dateRange)
+        - getCategories (contains a filter option for type)
+        - remove getBudgetCategories
     - [ ] **Step 5.3.3** Fetch data for the Income BudgetSection using `getIncomeCategories`, then within each category, fetch the income transactions for that category using `getIncomeTransactions` and filtering the results for the corresponding categoryId and render them under that category
     - [ ] **Step 5.3.4** Fetch data for the Expense BudgetSection using `getExpenseCategories`, then within each category, fetch the expense transactions for that category using `getExpenseTransactions` and filtering the results for the corresponding categoryId and render them under that category
 
