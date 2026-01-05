@@ -1,5 +1,5 @@
 import Overview from "./Overview";
-import Budget from "./Budget";
+import Budget from "./budget/Budget";
 import Insights from "./Insights";
 import Spending from "./Spending";
 
