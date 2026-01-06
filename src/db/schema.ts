@@ -1,11 +1,11 @@
-import { integer, pgTable, pgEnum, serial, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { integer, pgTable, pgEnum, serial, text, timestamp, boolean, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "purchase"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  clerkId: text("clerk_id").notNull().unique(),
+  authId: uuid("auth_id").notNull().unique(),
   email: text("email").notNull(),
   name: text("name"),
   imageUrl: text("image_url"),
