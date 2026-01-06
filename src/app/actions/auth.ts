@@ -16,7 +16,7 @@ const passwordSchema = z
   .regex(/[0-9]/, "Password must contain at least one number")
   .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
 
-const loginSchema = z.object({
+const signinSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Password is required"),
 });
@@ -27,14 +27,14 @@ const signupSchema = z.object({
   name: z.string().optional(),
 });
 
-export async function login(formData: FormData) {
+export async function signIn(formData: FormData) {
   const rawFormData = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
   };
 
   // Validate input
-  const validationResult = loginSchema.safeParse(rawFormData);
+  const validationResult = signinSchema.safeParse(rawFormData);
   if (!validationResult.success) {
     return {
       error: validationResult.error.issues[0]?.message || "Invalid input",
@@ -55,14 +55,14 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
-export async function signup(formData: FormData) {
+export async function signUp(formData: FormData) {
   const rawFormData = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
-    name: formData.get("name") as string | undefined,
+    name: formData.get("name")?.toString() || undefined,
   };
 
   // Validate input
@@ -112,7 +112,7 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function signOut() {
