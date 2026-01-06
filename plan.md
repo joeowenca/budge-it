@@ -109,7 +109,7 @@
     - A collapsed category looks like "CategoryName >    $1234.56" where it's just the category name, a chevron pointing right, and the total amount on the right-side of the line item. 
     - An expanded category looks like "CategoryName v        " where it's just the category name, a chevron point down, and no total amount. Instead, the total is calculated at the bottom below all transactions like a tally sheet.
 
-- [ ] **Step 5.5**: UI - Authentication Page (`src/app/login/page.tsx`)
+- [x] **Step 5.5**: UI - Authentication Page (`src/app/login/page.tsx`)
     - **UI Layout:**
         - Create a centered layout using a Shadcn `Card` component.
         - Use Shadcn `Tabs` to toggle between "Log In" and "Sign Up" modes.
@@ -122,3 +122,19 @@
     - **Integration:**
         - Connect forms to `login` and `signup` actions from `src/app/actions/auth.ts`.
         - Handle successful redirects (handled by server action, but ensure client cleans up state).
+- [x] **Step 5.6** Create Budget server actions (`/src/app/actions/budgetActions.ts`)
+    - **Action 1** Get all budget categories `getBudgetCategories`
+        - Checks that the user is signed in
+        - Retrieves all budget categories for the user
+        - Accepts options for filtering, like only retrieve the budget categories that have the specified type. See the type definition in `/src/db/schema.ts` in the enum `budgetTypeEnum`.
+    - **Action 2** Get all budget items `getBudgetItems`
+        - Checks that the user is signed in
+        - Retrieves all budget items for the user
+        - Accepts options for filtering, like only retrieve the budget items that have the specified type. See the type definition in `/src/db/schema.ts` in the enum `budgetTypeEnum`.
+    - **Action 3** Create budget category `createBudgetCategory`
+        - Checks that the user is signed in 
+        - Checks if that budget category already exists based on userId, type, and name. If those 3 fields match another category, then it already exists. We should return that category.
+        - If this budget category doesn't exist, create a new budget category with the following fields based on the budgetCateories schema found in `/src/db/schema.ts`
+    - **Action 4** Create budget item `createBudgetItem`
+        - Checks that the user is signed in 
+        - Create a new budget item with the following fields based on the budgetItems schema found in `/src/db/schema.ts`
