@@ -109,40 +109,16 @@
     - A collapsed category looks like "CategoryName >    $1234.56" where it's just the category name, a chevron pointing right, and the total amount on the right-side of the line item. 
     - An expanded category looks like "CategoryName v        " where it's just the category name, a chevron point down, and no total amount. Instead, the total is calculated at the bottom below all transactions like a tally sheet.
 
-- [ ] **Step 5.5**: UI - Make the budget column look nice
-    - Improve the category visuals
-        - Truncate category names that are too long with '...'
-    - Improve the transaction visuals
-        - Truncate transaction names that are too long with '...'
-    - Add a 'Net' section at the top that shows total income (green) subtracted by total expenses (red)
-
-## Phase 6: Editing the budget manager
-- [ ] **Step 6.1**: Ability to edit transactions and categories
-    - Ability to archive transactions
-    - Ability to archive categories which as a result archives all transactions within the category
-    - Ability to rename transactions
-    - Ability to edit the amount of transactions
-    - Ability to rename categories
-    - Ability to reorder categories
-    - Ability to reorder transactions 
-
-## Phase 7: The "Brain" - Analytics (Column 2)
-*Focus: Filling the center column with insights derived from the data in Cols 1 & 3.*
-
-- [ ] **Step 7.1**: Data Aggregation.
-    - Create `getFinancialInsights` Server Action.
-    - Calculate: Total Income, Total Expenses, Net Balance.
-    - Group data by Category for charts.
-- [ ] **Step 7.2**: Center Column Visualizations.
-    - **Pie Chart**: "Expense Breakdown" (Housing vs Food vs Fun).
-    - **Bar/Area Chart**: "3-Month Trend" (Income vs Expense over time).
-    - **Net Logic**: "Available to Spend" (Income - Expenses).
-
-## Phase 8: Polish & Refinement
-- [ ] **Step 8.1**: Mobile Optimization.
-    - Ensure the "Quick Add" button on mobile works smoothly.
-    - Check touch targets for scrolling lists.
-- [ ] **Step 8.2**: Date Filtering.
-    - Add a "Month Picker" to the top of the dashboard to filter all 3 columns by a specific month.
-- [ ] **Step 8.3**: Empty States.
-    - Design friendly "No transactions yet" states for the columns.
+- [ ] **Step 5.5**: UI - Authentication Page (`src/app/login/page.tsx`)
+    - **UI Layout:**
+        - Create a centered layout using a Shadcn `Card` component.
+        - Use Shadcn `Tabs` to toggle between "Log In" and "Sign Up" modes.
+        - Follow the styling patterns used throughout the app so far
+    - **Forms:**
+        - Implement `react-hook-form` with `zod` schema validation.
+        - **Fields:** Email (valid email format) and Password (min 8 chars, one capital, one number, one special character).
+        - **Feedback:** Show inline validation errors and a general error alert if the server action fails.
+        - **Loading:** specific `isSubmitting` state on buttons (e.g., "Signing in...").
+    - **Integration:**
+        - Connect forms to `login` and `signup` actions from `src/app/actions/auth.ts`.
+        - Handle successful redirects (handled by server action, but ensure client cleans up state).
