@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   return (
@@ -14,7 +13,7 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <UserButton afterSignOutUrl="/sign-in" />
+        <div>User Button</div>
       </div>
     </nav>
   );
