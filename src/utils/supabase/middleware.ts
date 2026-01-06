@@ -37,13 +37,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/sign-in") &&
-    !request.nextUrl.pathname.startsWith("/sign-up") &&
-    request.nextUrl.pathname.startsWith("/dashboard")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Protect root path and other routes (excluding public assets and auth pages)
+  const pathname = request.nextUrl.pathname;
+
+  console.log("Middleware checking:", pathname);
+  console.log("User found?", !!user);
+
+  const isPublicPath = 
+    pathname === "/sign-in" || 
+    pathname === "/sign-up" ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/);
+
+  if (!user && !isPublicPath) {
+    // no user, redirect to sign-in page
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
     return NextResponse.redirect(url);

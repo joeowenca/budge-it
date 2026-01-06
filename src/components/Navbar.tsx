@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import SignOutButton from "@/components/SignOutButton";
 
 export default function Navbar() {
   return (
@@ -13,7 +14,7 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <div>User Button</div>
+        <SignOutButton />
       </div>
     </nav>
   );
