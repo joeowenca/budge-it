@@ -15,19 +15,19 @@ function formatDate(date: Date | string): string {
   }).format(dateObj);
 }
 
-type Transaction = {
+type Item = {
   id: number;
-  label: string | null;
+  name: string | null;
   amount: number;
   date: Date | string | null;
 };
 
 interface BudgetItemProps {
-  transaction: Transaction;
+  item: Item;
   isEditing: boolean;
 }
 
-export function BudgetItem({ transaction, isEditing }: BudgetItemProps) {
+export function BudgetItem({ item, isEditing }: BudgetItemProps) {
   // Visual indicator for edit mode
   console.log("BudgetItem isEditing:", isEditing);
   return (
@@ -35,17 +35,17 @@ export function BudgetItem({ transaction, isEditing }: BudgetItemProps) {
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="font-medium truncate">
-            {transaction.label || "No label"}
+            {item.name || "No label"}
             {isEditing && <span className="text-xs text-blue-600 ml-2">(Edit Mode)</span>}
           </div>
-          {transaction.date && (
+          {item.date && (
             <div className="text-xs text-muted-foreground">
-              {formatDate(transaction.date)}
+              {formatDate(item.date)}
             </div>
           )}
         </div>
         <div className="font-medium ml-4 px-2.5 py-1 text-yellow-900 bg-yellow-600/10 rounded-full">
-          {formatAmount(transaction.amount)}
+          {formatAmount(item.amount)}
         </div>
       </div>
     </div>

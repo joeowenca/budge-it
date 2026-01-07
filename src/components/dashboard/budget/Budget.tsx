@@ -61,19 +61,19 @@ export default async function Budget() {
   );
 
   // Combine categories with their items
-  const incomeCategoriesWithTransactions = incomeCategories.map((category: any) => ({
+  const incomeCategoriesWithBudgetItems = incomeCategories.map((category: any) => ({
     ...category,
-    transactions: incomeItemsByCategory[category.id] || [],
+    budgetItems: incomeItemsByCategory[category.id] || [],
   }));
 
-  const expenseCategoriesWithItems = expenseCategories.map((category: any) => ({
+  const expenseCategoriesWithBudgetItems = expenseCategories.map((category: any) => ({
     ...category,
-    transactions: expenseItemsByCategory[category.id] || [],
+    budgetItems: expenseItemsByCategory[category.id] || [],
   }));
 
-  const savingsCategoriesWithItems = savingsCategories.map((category: any) => ({
+  const savingsCategoriesWithBudgetItems = savingsCategories.map((category: any) => ({
     ...category,
-    transactions: savingsItemsByCategory[category.id] || [],
+    budgetItems: savingsItemsByCategory[category.id] || [],
   }));
 
   return (
@@ -85,9 +85,9 @@ export default async function Budget() {
       <div className="flex-1 min-h-0">
         <div className="h-full lg:overflow-y-auto px-5 pb-5">
           <div className="space-y-6">
-            <BudgetSection title="Income" categories={incomeCategoriesWithTransactions} />
-            <BudgetSection title="Expenses" categories={expenseCategoriesWithItems} />
-            <BudgetSection title="Savings" categories={savingsCategoriesWithItems} />
+            <BudgetSection title="Income" categories={incomeCategoriesWithBudgetItems} />
+            <BudgetSection title="Expenses" categories={expenseCategoriesWithBudgetItems} />
+            <BudgetSection title="Savings" categories={savingsCategoriesWithBudgetItems} />
           </div>
         </div>
       </div>

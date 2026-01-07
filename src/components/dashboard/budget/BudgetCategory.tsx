@@ -6,19 +6,19 @@ import { BudgetItem } from "./BudgetItem";
 
 type Category = {
   id: number;
-  label: string;
+  name: string;
 };
 
-type Transaction = {
+type Item = {
   id: number;
-  label: string | null;
+  name: string | null;
   amount: number;
   date: Date | string | null;
 };
 
 interface BudgetCategoryProps {
   category: Category;
-  transactions: Transaction[];
+  items: Item[];
   title: string;
   isExpanded: boolean;
   onToggle: () => void;
@@ -48,14 +48,14 @@ function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
 
 export function BudgetCategory({
   category,
-  transactions,
+  items,
   title,
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
   // Initialize isEditing: true if no items, false otherwise
-  const [isEditing, setIsEditing] = useState(transactions.length === 0);
-  const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const [isEditing, setIsEditing] = useState(items.length === 0);
+  const totalAmount = items.reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_15px_rgba(0,0,0,0.1)] transition-colors">
@@ -66,7 +66,7 @@ export function BudgetCategory({
       >
         <div className="flex items-center justify-between">
           <div className="flex flex-1 min-w-0 items-center gap-2">
-            <span className="font-medium truncate">{category.label}</span>
+            <span className="font-medium truncate">{category.name}</span>
             <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-transform ${isExpanded ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
           </div>
           <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
@@ -84,19 +84,19 @@ export function BudgetCategory({
         Toggle Edit
       </button>
 
-      {/* Transactions - Only show when expanded */}
+      {/* Items - Only show when expanded */}
       {isExpanded && (
         <>
-          {transactions.length === 0 ? (
+          {items.length === 0 ? (
             <p className="text-xs text-muted-foreground pl-3">
               No transactions yet
             </p>
           ) : (
             <div className="space-y-1 mt-3">
-              {transactions.map((transaction) => (
+              {items.map((item) => (
                 <BudgetItem
-                  key={transaction.id}
-                  transaction={transaction}
+                  key={item.id}
+                  item={item}
                   isEditing={isEditing}
                 />
               ))}
