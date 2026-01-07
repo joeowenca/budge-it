@@ -2,6 +2,35 @@ import { integer, pgTable, pgEnum, serial, text, timestamp, boolean, uuid, doubl
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+export const budgetTypeEnum = pgEnum("budget_type", [
+  "income", 
+  "expense", 
+  "savings"
+]);
+
+export const frequencyTypeEnum = pgEnum("frequency_type", [
+  "weekly", 
+  "bi-weekly", 
+  "semi-monthly", 
+  "monthly"
+]);
+
+export const transactionTypeEnum = pgEnum("transaction_type", [
+  "spend", 
+  "save", 
+  "transfer"
+]);
+
+export const dayOfWeekTypeEnum = pgEnum("day_of_week_type", [
+  "monday", 
+  "tuesday", 
+  "wednesday", 
+  "thursday", 
+  "friday", 
+  "saturday", 
+  "sunday"
+]);
+
 // Budget Type enum
 export const budgetTypeSchema = z.enum(["income", "expense", "savings"]);
 export type BudgetType = z.infer<typeof budgetTypeSchema>;
@@ -9,6 +38,10 @@ export type BudgetType = z.infer<typeof budgetTypeSchema>;
 // Frequency Type enum
 export const frequencyTypeSchema = z.enum(["weekly", "bi-weekly", "semi-monthly", "monthly"]);
 export type FrequencyType = z.infer<typeof frequencyTypeSchema>;
+
+// Day of Week Type enum
+export const dayOfWeekTypeSchema = z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+export type DayOfWeekType = z.infer<typeof dayOfWeekTypeSchema>;
 
 // Filter schemas
 export const getBudgetCategoriesFilterSchema = z.object({
@@ -28,65 +61,85 @@ export const createBudgetCategorySchema = z.object({
   sortOrder: z.number().optional(),
 });
 
-// Create Budget Item schema
-export const createBudgetItemSchema = z.object({
-  budgetCategoryId: z.number().int().positive(),
-  type: budgetTypeSchema,
-  name: z.string().min(1, "Name is required"),
-  amount: z.number().int().default(0),
-  frequency: frequencyTypeSchema,
-  startDate: z.date(),
-  dayOfWeek: z.string().optional(),
-  dayOfMonth: z.string().optional(),
-  secondDayOfMonth: z.string().optional(),
-  sortOrder: z.number().optional(),
-}).superRefine((data, ctx) => {
-  const Frequency = frequencyTypeSchema.enum;
+export const createBudgetItemSchema = z
+  .object({
+    budgetCategoryId: z.number().int().positive(),
+    type: budgetTypeSchema,
+    name: z.string().min(1, "Name is required"),
+    amount: z.number().int().default(0),
+    frequency: frequencyTypeSchema,
+    startDate: z.date(),
 
-  // Rule 1: Weekly or Bi-weekly
-  if (data.frequency === Frequency.weekly || data.frequency === Frequency["bi-weekly"]) {
-    if (!data.dayOfWeek) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Day of the week is required for this frequency",
-        path: ["dayOfWeek"],
-      });
-    }
-  }
+    dayOfWeek: dayOfWeekTypeSchema.optional(),
 
-  // Rule 2: Monthly
-  if (data.frequency === Frequency.monthly) {
-    if (!data.dayOfMonth) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Day of the month is required for monthly items",
-        path: ["dayOfMonth"],
-      });
-    }
-  }
+    dayOfMonth: z.number().int().min(1).max(31).optional(),
+    dayOfMonthIsLast: z.boolean().default(false),
 
-  // Rule 3: Semi-monthly
-  if (data.frequency === Frequency["semi-monthly"]) {
-    if (!data.dayOfMonth) {
-      ctx.addIssue({
-        code: "custom",
-        message: "First payment day is required",
-        path: ["dayOfMonth"],
-      });
-    }
-    if (!data.secondDayOfMonth) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Second payment day is required",
-        path: ["secondDayOfMonth"],
-      });
-    }
-  }
-});
+    secondDayOfMonth: z.number().int().min(1).max(31).optional(),
+    secondDayOfMonthIsLast: z.boolean().default(false),
 
-export const budgetTypeEnum = pgEnum("budget_type", ["income", "expense", "savings"]);
-export const frequencyTypeEnum = pgEnum("frequency_type", ["weekly", "bi-weekly", "semi-monthly", "monthly"]);
-export const transactionTypeEnum = pgEnum("transaction_type", ["spend", "save", "transfer"]);
+    sortOrder: z.number().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const F = frequencyTypeSchema.enum;
+
+    /* Weekly / Bi-weekly */
+    if (data.frequency === F.weekly || data.frequency === F["bi-weekly"]) {
+      if (!data.dayOfWeek) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayOfWeek"],
+          message: "Day of the week is required for this frequency",
+        });
+      }
+    }
+
+    /* Monthly */
+    if (data.frequency === F.monthly) {
+      if (!data.dayOfMonthIsLast && data.dayOfMonth == null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayOfMonth"],
+          message: "Day of the month is required unless using last day",
+        });
+      }
+    }
+
+    /* Semi-monthly */
+    if (data.frequency === F["semi-monthly"]) {
+      if (!data.dayOfMonthIsLast && data.dayOfMonth == null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayOfMonth"],
+          message: "First payment day is required",
+        });
+      }
+
+      if (!data.secondDayOfMonthIsLast && data.secondDayOfMonth == null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["secondDayOfMonth"],
+          message: "Second payment day is required",
+        });
+      }
+
+      // Ordering rule
+      if (
+        !data.dayOfMonthIsLast &&
+        !data.secondDayOfMonthIsLast &&
+        data.dayOfMonth != null &&
+        data.secondDayOfMonth != null &&
+        data.secondDayOfMonth < data.dayOfMonth
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["secondDayOfMonth"],
+          message: "Second payment day cannot be earlier than the first",
+        });
+      }
+    }
+  });
+
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -108,8 +161,8 @@ export const budgetCategories = pgTable("budget_categories", {
   color: text("color"),
   sortOrder: doublePrecision("sort_order").notNull().default(0),
   isArchived: boolean("is_archived").default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
   archivedAt: timestamp("archived_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -122,13 +175,15 @@ export const budgetItems = pgTable("budget_items", {
   amount: integer("amount").notNull().default(0),
   frequency: frequencyTypeEnum("frequency").notNull(),
   startDate: timestamp("start_date").notNull(),
-  dayOfWeek: text("day_of_week"),
-  dayOfMonth: text("day_of_month"),
-  secondDayOfMonth: text("second_day_of_month"),
+  dayOfWeek: dayOfWeekTypeEnum("day_of_week"),
+  dayOfMonth: integer("day_of_month"),
+  dayOfMonthIsLast: boolean("day_of_month_is_last").notNull().default(false),
+  secondDayOfMonth: integer("second_day_of_month"),
+  secondDayOfMonthIsLast: boolean("second_day_of_month_is_last").notNull().default(false),
   sortOrder: doublePrecision("sort_order").notNull().default(0),
   isArchived: boolean("is_archived").default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
   archivedAt: timestamp("archived_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -142,8 +197,8 @@ export const spendingAccounts = pgTable("spending_accounts", {
   sortOrder: doublePrecision("sort_order").notNull(),
   pinOrder: doublePrecision("pin_order").notNull().default(0),
   isArchived: boolean("is_archived").default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
   archivedAt: timestamp("archived_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -155,8 +210,8 @@ export const spendingCategories = pgTable("spending_categories", {
   color: text("color"),
   sortOrder: doublePrecision("sort_order").notNull().default(0),
   isArchived: boolean("is_archived").default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
   archivedAt: timestamp("archived_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -170,8 +225,8 @@ export const spendingTransactions = pgTable("spending_transactions", {
   memo: text("memo"),
   date: timestamp("date"),
   isArchived: boolean("is_archived").default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
   archivedAt: timestamp("archived_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -183,13 +238,14 @@ export const spendingTopUps = pgTable("spending_top_ups", {
   amount: integer("amount").notNull().default(0),
   frequency: frequencyTypeEnum("frequency").notNull(),
   startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  dayOfWeek: text("day_of_week"),
-  dayOfMonth: text("day_of_month"),
-  secondDayOfMonth: text("second_day_of_month"),
+  dayOfWeek: dayOfWeekTypeEnum("day_of_week"),
+  dayOfMonth: integer("day_of_month"),
+  dayOfMonthIsLast: boolean("day_of_month_is_last").notNull().default(false),
+  secondDayOfMonth: integer("second_day_of_month"),
+  secondDayOfMonthIsLast: boolean("second_day_of_month_is_last").notNull().default(false),
   isArchived: boolean("is_archived").default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
   archivedAt: timestamp("archived_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -201,8 +257,8 @@ export const spendingTopUpOccurrences = pgTable("spending_top_up_occurences", {
   amount: integer("amount").notNull().default(0),
   isArchived: boolean("is_archived").default(false),
   isExecuted: boolean("is_executed").default(false),
-  executedAt: timestamp("executed_at"),
   archivedAt: timestamp("archived_at"),
+  executedAt: timestamp("executed_at"),
   createdAt: timestamp("created_at").defaultNow()
 });
 
