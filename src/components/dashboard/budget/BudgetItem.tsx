@@ -36,7 +36,7 @@ export function BudgetItem({ item }: BudgetItemProps) {
           </div>
           {item.startDate && (
             <div className="text-xs text-muted-foreground">
-              {formatDate(item.startDate)}
+              {item.startDate.toString()}
             </div>
           )}
         </div>

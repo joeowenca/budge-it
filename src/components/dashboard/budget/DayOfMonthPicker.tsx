@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import {
   Popover,
@@ -10,35 +8,35 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface DayOfMonthPickerProps {
-  value: string | undefined;
-  onChange: (value: string) => void;
+  value?: number; // 1-31
+  isLast?: boolean; // whether 'Last Day' is selected
+  onChange: (day: number | undefined, isLast?: boolean) => void;
   disabled?: boolean;
 }
 
 export function DayOfMonthPicker({
   value,
+  isLast,
   onChange,
   disabled = false,
 }: DayOfMonthPickerProps) {
-  const displayValue = value || "";
-  const displayText =
-    displayValue === "Last"
-      ? "Last Day"
-      : displayValue === "0"
-      ? "Last Day"
-      : displayValue
-      ? `Day ${displayValue}`
-      : "Select Day";
+  const displayText = isLast
+    ? "Last Day"
+    : value
+    ? `Day ${value}`
+    : "Select Day";
 
-  const handleDayClick = (dayValue: string) => {
-    onChange(dayValue);
+  const handleDayClick = (dayValue: number) => {
+    onChange(dayValue, false); // picking a day sets isLast = false
   };
 
-  const isSelected = (dayValue: string | number) => {
-    if (dayValue === "Last") {
-      return value === "Last" || value === "0";
-    }
-    return value === String(dayValue);
+  const handleLastClick = () => {
+    onChange(undefined, true); // last day selected
+  };
+
+  const isSelected = (dayValue: number | "last") => {
+    if (dayValue === "last") return isLast;
+    return value === dayValue && !isLast;
   };
 
   return (
@@ -54,7 +52,6 @@ export function DayOfMonthPicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4" align="start">
         <div className="grid grid-cols-7 gap-2">
-          {/* Render days 1-31 */}
           {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
             <Button
               key={day}
@@ -64,20 +61,20 @@ export function DayOfMonthPicker({
                 "h-9 w-9 p-0",
                 isSelected(day) && "bg-primary text-primary-foreground"
               )}
-              onClick={() => handleDayClick(String(day))}
+              onClick={() => handleDayClick(day)}
             >
               {day}
             </Button>
           ))}
-          {/* Render "Last" button */}
+
           <Button
-            variant={isSelected("Last") ? "default" : "outline"}
+            variant={isSelected("last") ? "default" : "outline"}
             size="sm"
             className={cn(
               "h-9 w-full col-span-7",
-              isSelected("Last") && "bg-primary text-primary-foreground"
+              isSelected("last") && "bg-primary text-primary-foreground"
             )}
-            onClick={() => handleDayClick("Last")}
+            onClick={handleLastClick}
           >
             Last
           </Button>
@@ -86,4 +83,3 @@ export function DayOfMonthPicker({
     </Popover>
   );
 }
-

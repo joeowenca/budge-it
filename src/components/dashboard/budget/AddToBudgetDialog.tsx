@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { dayOfWeekTypeSchema } from "@/db/schema";
 import {
   Dialog,
   DialogContent,
@@ -45,16 +46,14 @@ const formSchema = z
     category: z.union([z.string().min(1), z.number().int().positive()]),
     type: budgetTypeSchema,
     name: z.string().min(1, "Name is required"),
-    amount: z
-      .string()
-      .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-        message: "Amount must be a positive number.",
-      }),
+    amount: z.preprocess((val) => Number(val), z.number().min(0)),
     frequency: frequencyTypeSchema,
-    startDate: z.date(),
-    dayOfWeek: z.string().optional(),
-    dayOfMonth: z.string().optional(),
-    secondDayOfMonth: z.string().optional(),
+    startDate: z.string().refine((val) => /^\d{4}-\d{2}-\d{2}$/.test(val), { message: "Invalid date" }),
+    dayOfWeek: dayOfWeekTypeSchema.optional(),
+    dayOfMonth: z.number().optional(),
+    dayOfMonthIsLast: z.boolean(),
+    secondDayOfMonth: z.number().optional(),
+    secondDayOfMonthIsLast: z.boolean()
   })
   .superRefine((data, ctx) => {
     const Frequency = frequencyTypeSchema.enum;
@@ -101,15 +100,37 @@ const formSchema = z
         });
       } else if (data.dayOfMonth) {
         // Validate that 2nd day > 1st day (unless 2nd day is "Last"/"0")
-        const firstDay = parseInt(data.dayOfMonth);
-        const secondDayStr = data.secondDayOfMonth;
-        if (secondDayStr !== "Last" && secondDayStr !== "0") {
-          const secondDay = parseInt(secondDayStr);
-          if (!isNaN(firstDay) && !isNaN(secondDay) && secondDay <= firstDay) {
+        const firstDay = data.dayOfMonth;
+        const firstDayIsLast = data.dayOfMonthIsLast;
+        const secondDay = data.secondDayOfMonth;
+        const secondDayIsLast = data.secondDayOfMonthIsLast;
+
+        if (firstDayIsLast) {
+          // Rule 1
+          ctx.addIssue({
+            code: "custom",
+            path: ["dayOfMonthIsLast"],
+            message: "First Payment Day cannot be set as 'Last' for Semi-Monthly.",
+          });
+        }
+
+        if (!secondDayIsLast) {
+          if (firstDay == null || secondDay == null) {
+            // Skip: validation for empty values happens elsewhere
+          } else if (firstDay >= secondDay) {
             ctx.addIssue({
               code: "custom",
-              message: "Second day must be greater than first day",
               path: ["secondDayOfMonth"],
+              message: "First Payment Day must be before the Second Payment Day.",
+            });
+          }
+        } else {
+          // secondDayIsLast is true
+          if (firstDay != null && firstDay > 27) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["dayOfMonth"],
+              message: "First Payment Day must be before the 28th when the Second Payment Day is 'Last'.",
             });
           }
         }
@@ -125,7 +146,7 @@ interface AddToBudgetDialogProps {
 }
 
 type BudgetCategory = {
-  id: number;
+  id: string;
   name: string;
   type: BudgetType;
   emoji?: string | null;
@@ -158,17 +179,35 @@ export function AddToBudgetDialog({
       category: "",
       type: "expense",
       name: "",
-      amount: "",
+      amount: 0,
       frequency: "weekly",
-      startDate: new Date(),
-      dayOfWeek: "Monday",
+      startDate: new Date().toISOString().split("T")[0],
+      dayOfWeek: "monday",
       dayOfMonth: undefined,
+      dayOfMonthIsLast: false,
       secondDayOfMonth: undefined,
+      secondDayOfMonthIsLast: false
     },
   });
 
-  const watchedType = form.watch("type");
   const watchedFrequency = form.watch("frequency");
+
+  // Clear fields when frequency changes
+  useEffect(() => {
+    if (watchedFrequency === "weekly" || watchedFrequency === "bi-weekly") {
+      // keep dayOfWeek
+      form.setValue("dayOfMonth", undefined);
+      form.setValue("dayOfMonthIsLast", false);
+      form.setValue("secondDayOfMonth", undefined);
+      form.setValue("secondDayOfMonthIsLast", false);
+    } else if (watchedFrequency === "monthly") {
+      form.setValue("dayOfWeek", undefined);
+      form.setValue("secondDayOfMonth", undefined);
+      form.setValue("secondDayOfMonthIsLast", false);
+    } else if (watchedFrequency === "semi-monthly") {
+      form.setValue("dayOfWeek", undefined);
+    }
+  }, [watchedFrequency, form]);
 
   // Fetch categories on mount and when type changes
   useEffect(() => {
@@ -207,13 +246,20 @@ export function AddToBudgetDialog({
   // Handle category creation in combobox
   const handleCategoryCreate = (categoryName: string) => {
     const newCategory: BudgetCategory = {
-      id: Date.now(), // Temporary ID
+      id: crypto.randomUUID(), // Temporary ID
       name: categoryName,
       type: activeTab,
     };
     setNewCategories((prev) => [...prev, newCategory]);
     // Note: The combobox will call onValueChange with the new value, so we don't need to set it here
   };
+
+  const resetForm = React.useCallback(() => {
+    form.reset();
+    setNewCategories([]);
+    setError(null);
+    setActiveTab("expense");
+  }, [form]);
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
@@ -247,14 +293,14 @@ export function AddToBudgetDialog({
         budgetCategoryId: categoryId,
         type: data.type,
         name: data.name,
-        amount: Math.round(parseFloat(data.amount) * 100),
+        amount: Math.round(data.amount * 100),
         frequency: data.frequency,
-        startDate: data.startDate,
+        startDate: new Date(data.startDate + "T00:00:00"), 
         dayOfWeek: data.dayOfWeek,
-        dayOfMonth:
-          data.dayOfMonth === "Last" ? "0" : data.dayOfMonth,
-        secondDayOfMonth:
-          data.secondDayOfMonth === "Last" ? "0" : data.secondDayOfMonth,
+        dayOfMonth: data.dayOfMonth,
+        dayOfMonthIsLast: data.dayOfMonthIsLast,
+        secondDayOfMonth: data.secondDayOfMonth,
+        secondDayOfMonthIsLast: data.secondDayOfMonthIsLast,
       };
 
       // Step 4: Create the budget item
@@ -265,8 +311,7 @@ export function AddToBudgetDialog({
       }
 
       // Success - reset form and close dialog
-      form.reset();
-      setNewCategories([]);
+      resetForm();
       onOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -278,10 +323,7 @@ export function AddToBudgetDialog({
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
-      form.reset();
-      setNewCategories([]);
-      setError(null);
-      setActiveTab("expense");
+      resetForm();
     }
   }, [open, form]);
 
@@ -405,18 +447,8 @@ export function AddToBudgetDialog({
                       <FormControl>
                         <Input
                           type="date"
-                          value={
-                            field.value && !isNaN(new Date(field.value).getTime())
-                              ? new Date(field.value).toISOString().split("T")[0]
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const date = new Date(e.target.value);
-                            // Only update form state if it's a valid date
-                            if (!isNaN(date.getTime())) {
-                              field.onChange(date);
-                            }
-                          }}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -458,15 +490,15 @@ export function AddToBudgetDialog({
                         <FormLabel>Day of Week</FormLabel>
                         <FormControl>
                           <Tabs
-                            value={field.value}
-                            onValueChange={field.onChange}
+                            value={field.value?.toLowerCase()}
+                            onValueChange={(v) => field.onChange(v.toLowerCase())}
                             className="w-full"
                           >
                             <TabsList className="grid w-full grid-cols-7">
                               {DAYS_OF_WEEK.map((day) => (
                                 <TabsTrigger 
                                   key={day} 
-                                  value={day} 
+                                  value={day.toLowerCase()} 
                                   className="px-0 text-xs sm:text-sm" // tighter padding for 7 items
                                 >
                                   {day.substring(0, 3)} {/* "Mon", "Tue", etc. */}
@@ -490,7 +522,7 @@ export function AddToBudgetDialog({
                         <FormLabel>Day of Month</FormLabel>
                         <FormControl>
                           <DayOfMonthPicker
-                            value={field.value ?? ""}
+                            value={field.value ?? 1}
                             onChange={field.onChange}
                           />
                         </FormControl>
@@ -512,7 +544,7 @@ export function AddToBudgetDialog({
                           <FormLabel>First Payment Day</FormLabel>
                           <FormControl>
                             <DayOfMonthPicker
-                              value={field.value ?? ""}
+                              value={field.value ?? 1}
                               onChange={field.onChange}
                             />
                           </FormControl>
@@ -530,7 +562,7 @@ export function AddToBudgetDialog({
                           <FormLabel>Second Payment Day</FormLabel>
                           <FormControl>
                             <DayOfMonthPicker
-                              value={field.value ?? ""}
+                              value={field.value ?? 1}
                               onChange={field.onChange}
                             />
                           </FormControl>
