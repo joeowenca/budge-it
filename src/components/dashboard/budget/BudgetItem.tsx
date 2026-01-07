@@ -22,16 +22,22 @@ type Transaction = {
   date: Date | string | null;
 };
 
-interface BudgetTransactionProps {
+interface BudgetItemProps {
   transaction: Transaction;
+  isEditing: boolean;
 }
 
-export function BudgetTransaction({ transaction }: BudgetTransactionProps) {
+export function BudgetItem({ transaction, isEditing }: BudgetItemProps) {
+  // Visual indicator for edit mode
+  console.log("BudgetItem isEditing:", isEditing);
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
-          <div className="font-medium truncate">{transaction.label || "No label"}</div>
+          <div className="font-medium truncate">
+            {transaction.label || "No label"}
+            {isEditing && <span className="text-xs text-blue-600 ml-2">(Edit Mode)</span>}
+          </div>
           {transaction.date && (
             <div className="text-xs text-muted-foreground">
               {formatDate(transaction.date)}

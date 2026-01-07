@@ -1,5 +1,88 @@
 import { integer, pgTable, pgEnum, serial, text, timestamp, boolean, uuid, doublePrecision } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { z } from "zod";
+
+// Budget Type enum
+export const budgetTypeSchema = z.enum(["income", "expense", "savings"]);
+export type BudgetType = z.infer<typeof budgetTypeSchema>;
+
+// Frequency Type enum
+export const frequencyTypeSchema = z.enum(["weekly", "bi-weekly", "semi-monthly", "monthly"]);
+export type FrequencyType = z.infer<typeof frequencyTypeSchema>;
+
+// Filter schemas
+export const getBudgetCategoriesFilterSchema = z.object({
+  type: budgetTypeSchema.optional(),
+});
+
+export const getBudgetItemsFilterSchema = z.object({
+  type: budgetTypeSchema.optional(),
+});
+
+// Create Budget Category schema
+export const createBudgetCategorySchema = z.object({
+  type: budgetTypeSchema,
+  name: z.string().min(1, "Name is required"),
+  emoji: z.string().optional(),
+  color: z.string().optional(),
+  sortOrder: z.number().optional(),
+});
+
+// Create Budget Item schema
+export const createBudgetItemSchema = z.object({
+  budgetCategoryId: z.number().int().positive(),
+  type: budgetTypeSchema,
+  name: z.string().min(1, "Name is required"),
+  amount: z.number().int().default(0),
+  frequency: frequencyTypeSchema,
+  startDate: z.date(),
+  dayOfWeek: z.string().optional(),
+  dayOfMonth: z.string().optional(),
+  secondDayOfMonth: z.string().optional(),
+  sortOrder: z.number().optional(),
+}).superRefine((data, ctx) => {
+  const Frequency = frequencyTypeSchema.enum;
+
+  // Rule 1: Weekly or Bi-weekly
+  if (data.frequency === Frequency.weekly || data.frequency === Frequency["bi-weekly"]) {
+    if (!data.dayOfWeek) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Day of the week is required for this frequency",
+        path: ["dayOfWeek"],
+      });
+    }
+  }
+
+  // Rule 2: Monthly
+  if (data.frequency === Frequency.monthly) {
+    if (!data.dayOfMonth) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Day of the month is required for monthly items",
+        path: ["dayOfMonth"],
+      });
+    }
+  }
+
+  // Rule 3: Semi-monthly
+  if (data.frequency === Frequency["semi-monthly"]) {
+    if (!data.dayOfMonth) {
+      ctx.addIssue({
+        code: "custom",
+        message: "First payment day is required",
+        path: ["dayOfMonth"],
+      });
+    }
+    if (!data.secondDayOfMonth) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Second payment day is required",
+        path: ["secondDayOfMonth"],
+      });
+    }
+  }
+});
 
 export const budgetTypeEnum = pgEnum("budget_type", ["income", "expense", "savings"]);
 export const frequencyTypeEnum = pgEnum("frequency_type", ["weekly", "bi-weekly", "semi-monthly", "monthly"]);

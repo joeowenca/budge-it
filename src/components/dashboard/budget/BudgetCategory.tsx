@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronRight, ChevronDown } from "lucide-react";
-import { BudgetTransaction } from "./BudgetTransaction";
+import { useState } from "react";
+import { ChevronRight } from "lucide-react";
+import { BudgetItem } from "./BudgetItem";
 
 type Category = {
   id: number;
@@ -52,6 +53,8 @@ export function BudgetCategory({
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
+  // Initialize isEditing: true if no items, false otherwise
+  const [isEditing, setIsEditing] = useState(transactions.length === 0);
   const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
@@ -70,6 +73,17 @@ export function BudgetCategory({
         </div>
       </div>
 
+      {/* Toggle Edit Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsEditing(!isEditing);
+        }}
+        className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+      >
+        Toggle Edit
+      </button>
+
       {/* Transactions - Only show when expanded */}
       {isExpanded && (
         <>
@@ -80,9 +94,10 @@ export function BudgetCategory({
           ) : (
             <div className="space-y-1 mt-3">
               {transactions.map((transaction) => (
-                <BudgetTransaction
+                <BudgetItem
                   key={transaction.id}
                   transaction={transaction}
+                  isEditing={isEditing}
                 />
               ))}
               {/* Total at bottom - Tally sheet style */}

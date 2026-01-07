@@ -138,3 +138,20 @@
     - **Action 4** Create budget item `createBudgetItem`
         - Checks that the user is signed in 
         - Create a new budget item with the following fields based on the budgetItems schema found in `/src/db/schema.ts`
+- [ ] **Step 5.6** Refactor budget front-end to support 'add' actions (`/src/components/dashboard/budget` directory)
+    - [x] **Step 5.6.1 - State** Managing the local edit state
+        - Each BudgetCategory component will have its own `edit` boolean state. By default, this state will be set to `false`, but if the BudgetCategory contains no BudgetItems, `edit` will be automatically updated to `true`. This check should happen when the component mounts. 
+        - Each BudgetItem component (at `/src/components/dashboard/budget/BudgetItem.tsx`) will receive an `edit` prop from the parent BudgetCategory component, so the BudgetItem knows when to go into its edit state.
+    - [ ] **Step 5.6.2 - UI** Buttons and fields for adding BudgetCategories and BudgetItems when in the edit state
+        - BudgetCategory edit button on `/src/components/dashboard/budget/BudgetCategory.tsx`
+            - Only when the BudgetCategory component is expanded, there will be an edit icon in the top-right corner where the TotalAmount used to be. This edit button will have a pencil icon.
+            - When the BudgetCategory's edit state is set to `false`, show this pencil edit icon. When the edit state is `true`, show a save icon that is a checkmark, and a cancel icon that is an X. For now, both the save and cancel buttons will just change the edit state back to `false`. 
+        - BudgetCategory 'AddBudgetItem' component within `/src/components/dashboard/budget/BudgetCategory.tsx`
+            - This will be a default component within the BudgetCategory component. Essentially, when the BudgetComponent is in the edit === true state, this default 'AddBudgetItem' component will display at the bottom of all the BudgetCategory's BudgetItems and serve as an input field to add new BudgetItems. The AddBudgetItem input field should use the same styling as the BudgetItem component. 
+        - BudgetSection 'AddCategory' component within `/src/components/dashboard/budget/BudgetSection.tsx`
+            - This 'AddBudgetCategory' component will live within each BudgetSection component and render at the bottom of all BudgetCategories within that section. 
+            - The 'AddBudgetCategory' component will display all the time, regardless of the edit state. 
+            The 'AddBudgetCategory' component will have 3 UI options:
+                - An 'Add Emoji' button with an emoji picker
+                - An input text field to add a category name
+                - An add button to confirm and add the category using the `createBudgetCategory` server action and passing in the type depending on which BudgetSection this was called from.
