@@ -51,7 +51,7 @@ export default function BudgetSection({ title, categories }: BudgetSectionProps)
               <BudgetCategory
                 key={category.id}
                 category={categoryForDisplay}
-                transactions={category.budgetItems}
+                items={category.budgetItems}
                 title={title}
                 isExpanded={isExpanded}
                 onToggle={() => toggleCategory(category.id)}

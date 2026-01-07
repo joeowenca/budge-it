@@ -142,16 +142,55 @@
     - [x] **Step 5.6.1 - State** Managing the local edit state
         - Each BudgetCategory component will have its own `edit` boolean state. By default, this state will be set to `false`, but if the BudgetCategory contains no BudgetItems, `edit` will be automatically updated to `true`. This check should happen when the component mounts. 
         - Each BudgetItem component (at `/src/components/dashboard/budget/BudgetItem.tsx`) will receive an `edit` prop from the parent BudgetCategory component, so the BudgetItem knows when to go into its edit state.
-    - [ ] **Step 5.6.2 - UI** Buttons and fields for adding BudgetCategories and BudgetItems when in the edit state
-        - BudgetCategory edit button on `/src/components/dashboard/budget/BudgetCategory.tsx`
-            - Only when the BudgetCategory component is expanded, there will be an edit icon in the top-right corner where the TotalAmount used to be. This edit button will have a pencil icon.
-            - When the BudgetCategory's edit state is set to `false`, show this pencil edit icon. When the edit state is `true`, show a save icon that is a checkmark, and a cancel icon that is an X. For now, both the save and cancel buttons will just change the edit state back to `false`. 
-        - BudgetCategory 'AddBudgetItem' component within `/src/components/dashboard/budget/BudgetCategory.tsx`
-            - This will be a default component within the BudgetCategory component. Essentially, when the BudgetComponent is in the edit === true state, this default 'AddBudgetItem' component will display at the bottom of all the BudgetCategory's BudgetItems and serve as an input field to add new BudgetItems. The AddBudgetItem input field should use the same styling as the BudgetItem component. 
-        - BudgetSection 'AddCategory' component within `/src/components/dashboard/budget/BudgetSection.tsx`
-            - This 'AddBudgetCategory' component will live within each BudgetSection component and render at the bottom of all BudgetCategories within that section. 
-            - The 'AddBudgetCategory' component will display all the time, regardless of the edit state. 
-            The 'AddBudgetCategory' component will have 3 UI options:
-                - An 'Add Emoji' button with an emoji picker
-                - An input text field to add a category name
-                - An add button to confirm and add the category using the `createBudgetCategory` server action and passing in the type depending on which BudgetSection this was called from.
+    - [ ] **Step 5.6.2 - Add To Budget dialog**
+        - Create `src/components/dashboard/budget/AddToBudgetDialog.tsx`.
+            - Features:
+                - **Tabs** 3 tabs in this order to create the following items: Expense, Savings, Income
+                    - **Expense tab**
+                        - Automatically sets the item type to 'Expense' in the backend
+                    - **Savings tab**
+                        - Automatically sets the item type to 'Savings' in the backend
+                    - **Income tab**
+                        - Automatically sets the item type to 'Income' in the backend
+                    - **Shared fields between the 3 tabs**
+                        - All tabs will contain the following fields:
+                            - Category (Combobox: Select existing budgetCategory with the type "expense" or create a new budgetCategory with the type "expense"). Uses the server actions in `/src/app/actions/budgetActions.ts` to getBudgetCategories and createBudgetCategories
+                            - Name (text input field)
+                            - Amount (number input field)
+                            - Frequency (4 tabs to select a frequency type: Weekly, Bi-Weekly, Semi-Monthly, Monthly)
+                            - Start Date (Calendar date picker that inputs a timestamp)
+                            - If the frequency type is Weekly or Bi-Weekly, display the following field:
+                                - Day of week (Sunday, Monday, Tuesday, Wedesday, Thusday, Friday, Saturday). Can be a drop-down menu field
+                            - If the frequency type is Monthly, display the following field:
+                                - Day of month (1-31 as a number, or Last which enters in '0' in the backend but displays as 'Last' on the front end)
+                            - If the frequency type is Semi-Monthly, display the following fields:
+                                - First day of month (1-31 as a number)
+                                - Second day of month (1-31 as a number, or Last which enters in '0' in the backend but displays as 'Last' on the front end)
+                                - Return an error if the Second day of month is before or equal to the first day of month. They can't match, and second day of the month needs to be > First day of the month unless Second day of the month is set to '0/Last'.
+                            - Cancel and Submit buttons in the footer of the dialog pop-up
+                - Connect to `/src/app/actions/budgetActions.ts` with the `addBudgetCategory`, `getBudgetCategory` `addBudgetItem` server actions.
+
+        - Create `src/components/dashboard/AddTransactionDialog.tsx`.
+            - Features:
+                - **Tabs** 3 tabs in this order to create the following items: Purchase, Expense, Income
+                    - **Purchase tab** 
+                        -Has the following fields:
+                            - Category (Combobox: Select existing category with the type "purchase" or create a new category with the type "purchase")
+                            - Amount
+                            - Date
+                            - Memo
+                        - Used to create a transaction with the type "Purchase" under the selected category
+                    - **Expense tab** 
+                        - Has the following fields:
+                            - Category (Combobox: Select existing category with the type "expense" or create a new category with the type "expense")
+                            - Label
+                            - Amount
+                            - (No date field yet, will just consider all expenses as monthly)
+                    - **Income tab** has the following fields:
+                        - Has the following fields:
+                            - Category (Combobox: Select existing category with the type "income" or create a new category with the type "income")
+                            - Label
+                            - Amount
+                            - (No date field yet, will just consider all income as monthly)
+                - **Add button** a button at the bottom of the dialog to create the transaction and/or category based on the tab selected and fields completed.
+            - Connect to `addTransaction` action. 

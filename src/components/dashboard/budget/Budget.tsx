@@ -1,4 +1,5 @@
 import BudgetSection from "./BudgetSection";
+import { AddToBudgetDialogButton } from "./AddToBudgetDialogButton";
 import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
 
 export default async function Budget() {
@@ -79,7 +80,10 @@ export default async function Budget() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex-none">
-        <h2 className="text-3xl font-black p-5">Budget</h2>
+        <div className="flex items-center justify-between p-5">
+          <h2 className="text-3xl font-black">Budget</h2>
+          <AddToBudgetDialogButton />
+        </div>
       </div>
 
       <div className="flex-1 min-h-0">

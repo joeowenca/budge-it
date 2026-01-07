@@ -24,19 +24,15 @@ type Item = {
 
 interface BudgetItemProps {
   item: Item;
-  isEditing: boolean;
 }
 
-export function BudgetItem({ item, isEditing }: BudgetItemProps) {
-  // Visual indicator for edit mode
-  console.log("BudgetItem isEditing:", isEditing);
+export function BudgetItem({ item }: BudgetItemProps) {
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="font-medium truncate">
             {item.name || "No label"}
-            {isEditing && <span className="text-xs text-blue-600 ml-2">(Edit Mode)</span>}
           </div>
           {item.date && (
             <div className="text-xs text-muted-foreground">

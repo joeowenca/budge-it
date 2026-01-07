@@ -53,8 +53,6 @@ export function BudgetCategory({
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
-  // Initialize isEditing: true if no items, false otherwise
-  const [isEditing, setIsEditing] = useState(items.length === 0);
   const totalAmount = items.reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
@@ -73,17 +71,6 @@ export function BudgetCategory({
         </div>
       </div>
 
-      {/* Toggle Edit Button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsEditing(!isEditing);
-        }}
-        className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded transition-colors"
-      >
-        Toggle Edit
-      </button>
-
       {/* Items - Only show when expanded */}
       {isExpanded && (
         <>
@@ -97,7 +84,6 @@ export function BudgetCategory({
                 <BudgetItem
                   key={item.id}
                   item={item}
-                  isEditing={isEditing}
                 />
               ))}
               {/* Total at bottom - Tally sheet style */}
