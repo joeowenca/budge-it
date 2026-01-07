@@ -51,7 +51,11 @@ const formSchema = z
     category: z.union([z.string().min(1), z.number().int().positive()]),
     type: budgetTypeSchema,
     name: z.string().min(1, "Name is required"),
-    amount: z.number().int().min(0),
+    amount: z
+      .string()
+      .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+        message: "Amount must be a positive number.",
+      }),
     frequency: frequencyTypeSchema,
     startDate: z.date(),
     dayOfWeek: z.string().optional(),
@@ -162,10 +166,10 @@ export function AddToBudgetDialog({
       category: "",
       type: "expense",
       name: "",
-      amount: 0,
-      frequency: "monthly",
+      amount: "",
+      frequency: "weekly",
       startDate: new Date(),
-      dayOfWeek: undefined,
+      dayOfWeek: "Monday",
       dayOfMonth: undefined,
       secondDayOfMonth: undefined,
     },
@@ -251,7 +255,7 @@ export function AddToBudgetDialog({
         budgetCategoryId: categoryId,
         type: data.type,
         name: data.name,
-        amount: data.amount,
+        amount: Math.round(parseFloat(data.amount) * 100),
         frequency: data.frequency,
         startDate: data.startDate,
         dayOfWeek: data.dayOfWeek,
@@ -319,7 +323,10 @@ export function AddToBudgetDialog({
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as BudgetType)}
             >
-              <TabsList className="grid w-full grid-cols-3">
+              <label className="text-sm font-medium leading-none select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Type
+              </label>
+              <TabsList className="grid w-full grid-cols-3 mt-1">
                 <TabsTrigger value="expense">Expense</TabsTrigger>
                 <TabsTrigger value="savings">Savings</TabsTrigger>
                 <TabsTrigger value="income">Income</TabsTrigger>
@@ -381,15 +388,43 @@ export function AddToBudgetDialog({
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount (cents)</FormLabel>
+                      <FormLabel>Amount ($)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
+                          step="0.01"
+                          placeholder="0.00"
+                          {...field} 
+                          // No custom onChange needed anymore!
+                          // React-hook-form handles the string updates automatically
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Next Payment Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={
+                            field.value && !isNaN(new Date(field.value).getTime())
+                              ? new Date(field.value).toISOString().split("T")[0]
+                              : ""
                           }
+                          onChange={(e) => {
+                            const date = new Date(e.target.value);
+                            // Only update form state if it's a valid date
+                            if (!isNaN(date.getTime())) {
+                              field.onChange(date);
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -403,50 +438,18 @@ export function AddToBudgetDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Frequency</FormLabel>
-                      <Select
+                      <Tabs
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
+                        className="w-full"
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select frequency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
-                          <SelectItem value="semi-monthly">
-                            Semi-Monthly
-                          </SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={
-                            field.value
-                              ? new Date(field.value)
-                                  .toISOString()
-                                  .split("T")[0]
-                              : ""
-                          }
-                          onChange={(e) =>
-                            field.onChange(new Date(e.target.value))
-                          }
-                        />
-                      </FormControl>
+                        <TabsList className="grid w-full grid-cols-4">
+                          <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                          <TabsTrigger value="bi-weekly">Bi-Weekly</TabsTrigger>
+                          <TabsTrigger value="semi-monthly">Semi-Monthly</TabsTrigger>
+                          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -461,23 +464,25 @@ export function AddToBudgetDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Day of Week</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select day" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {DAYS_OF_WEEK.map((day) => (
-                              <SelectItem key={day} value={day}>
-                                {day}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <Tabs
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="w-full"
+                          >
+                            <TabsList className="grid w-full grid-cols-7">
+                              {DAYS_OF_WEEK.map((day) => (
+                                <TabsTrigger 
+                                  key={day} 
+                                  value={day} 
+                                  className="px-0 text-xs sm:text-sm" // tighter padding for 7 items
+                                >
+                                  {day.substring(0, 3)} {/* "Mon", "Tue", etc. */}
+                                </TabsTrigger>
+                              ))}
+                            </TabsList>
+                          </Tabs>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -515,64 +520,85 @@ export function AddToBudgetDialog({
                   />
                 )}
 
+                {/* SEMI-MONTHLY: Side-by-side inputs */}
                 {watchedFrequency === "semi-monthly" && (
-                  <>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* 1st Day Input */}
                     <FormField
                       control={form.control}
                       name="dayOfMonth"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Day</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select first day" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {DAYS_OF_MONTH.map((day) => (
-                                <SelectItem key={day} value={day.toString()}>
-                                  {day}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>First Payment Day</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min={1} 
+                              max={31}
+                              placeholder="1 or 15"
+                              {...field}
+                              value={field.value ?? ""}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    {/* 2nd Day Input with "Last Day" Checkbox */}
                     <FormField
                       control={form.control}
                       name="secondDayOfMonth"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Second Day</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select second day" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {DAYS_OF_MONTH.map((day) => (
-                                <SelectItem key={day} value={day.toString()}>
-                                  {day}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="Last">Last</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const isLastDay = field.value === "Last" || field.value === "0";
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel>Second Payment Day</FormLabel>
+                            <div className="space-y-2">
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={31}
+                                  placeholder="15 or 30"
+                                  {...field}
+                                  disabled={isLastDay} 
+                                  value={isLastDay ? "" : (field.value ?? "")} 
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                />
+                              </FormControl>
+                              
+                              {/* "Last Day" Toggle */}
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id="lastDayCheck"
+                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                  checked={isLastDay}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      field.onChange("Last");
+                                    } else {
+                                      field.onChange("");
+                                    }
+                                  }}
+                                />
+                                <label
+                                  htmlFor="lastDayCheck"
+                                  className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  Use Last Day of Month
+                                </label>
+                              </div>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
-                  </>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>

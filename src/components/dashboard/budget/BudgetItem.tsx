@@ -19,7 +19,7 @@ type Item = {
   id: number;
   name: string | null;
   amount: number;
-  date: Date | string | null;
+  startDate: Date | string | null;
 };
 
 interface BudgetItemProps {
@@ -34,9 +34,9 @@ export function BudgetItem({ item }: BudgetItemProps) {
           <div className="font-medium truncate">
             {item.name || "No label"}
           </div>
-          {item.date && (
+          {item.startDate && (
             <div className="text-xs text-muted-foreground">
-              {formatDate(item.date)}
+              {formatDate(item.startDate)}
             </div>
           )}
         </div>
