@@ -40,7 +40,7 @@ export function BudgetItem({ item }: BudgetItemProps) {
             </div>
           )}
         </div>
-        <div className="font-medium ml-4 px-2.5 py-1 text-yellow-900 bg-yellow-600/10 rounded-full">
+        <div className="font-medium ml-4 px-2.5 py-1 text-yellow-800 bg-yellow-600/10 rounded-full tracking-wider">
           {formatAmount(item.amount)}
         </div>
       </div>

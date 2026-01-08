@@ -13,7 +13,7 @@ type Item = {
   id: number;
   name: string | null;
   amount: number;
-  date: Date | string | null;
+  startDate: Date | string | null;
 };
 
 interface BudgetCategoryProps {
@@ -38,9 +38,15 @@ interface TotalAmountProps {
   isExpanded?: boolean;
 }
 
+const titleColors: Record<string, string> = {
+  Income: "text-blue-600 bg-primary/10",
+  Expenses: "text-red-600 bg-red-600/10",
+  Savings: "text-green-700 bg-green-600/10",
+};
+
 function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
   return (
-    <span className={`font-medium text-sm ml-4 px-2.5 py-1 ${title === "Income" ? "text-green-900 bg-green-600/10" : "text-blue-900 bg-primary/10"} rounded-full ${isExpanded && "invisible"}`}>
+    <span className={`font-medium text-sm tracking-wider ml-4 px-2.5 py-1 ${titleColors[title ?? ""] || "text-gray-900 bg-gray-600/10"} rounded-full ${isExpanded && "invisible"}`}>
       {totalAmount}
     </span>
   );

@@ -255,10 +255,12 @@ export function AddToBudgetDialog({
   };
 
   const resetForm = React.useCallback(() => {
-    form.reset();
-    setNewCategories([]);
-    setError(null);
-    setActiveTab("expense");
+    setTimeout(() => {
+      form.reset();
+      setNewCategories([]);
+      setError(null);
+      setActiveTab("expense");
+    }, 200);
   }, [form]);
 
   // Handle form submission
@@ -346,8 +348,7 @@ export function AddToBudgetDialog({
         <DialogHeader>
           <DialogTitle>Add to Budget</DialogTitle>
           <DialogDescription>
-            Create a new budget item by selecting a category or creating a new
-            one.
+            Create a new budget item
           </DialogDescription>
         </DialogHeader>
 
@@ -431,24 +432,6 @@ export function AddToBudgetDialog({
                           {...field} 
                           // No custom onChange needed anymore!
                           // React-hook-form handles the string updates automatically
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Next Payment Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -572,6 +555,24 @@ export function AddToBudgetDialog({
                     />
                   </div>
                 )}
+
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Payment Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </TabsContent>
             </Tabs>
 
