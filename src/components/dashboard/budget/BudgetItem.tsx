@@ -79,12 +79,12 @@ export function BudgetItem({ item }: BudgetItemProps) {
             </div>
           )}
         </div>
-        <div className="font-medium ml-4 px-2.5 py-1 text-yellow-800 bg-yellow-600/10 rounded-full tracking-wider">
-          <span className="font-normal tracking-[0.2em]">
+        <span className="text-xs text-muted-foreground tracking-[0.2em] ml-4 mr-1">
             {item.frequency === "weekly" && "4x"}
             {item.frequency === "bi-weekly" && "2x"}
             {item.frequency === "semi-monthly" && "2x"}
           </span>
+        <div className="font-medium px-2.5 py-1 text-yellow-800 bg-yellow-600/10 rounded-full tracking-wider">
           {formatAmount(item.amount)}
         </div>
       </div>

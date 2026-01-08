@@ -53,7 +53,7 @@ const titleColors: Record<string, string> = {
 
 function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
   return (
-    <span className={`font-medium text-sm tracking-wider ml-4 px-2.5 py-1 ${titleColors[title ?? ""] || "text-gray-900 bg-gray-600/10"} rounded-full ${isExpanded && "invisible"}`}>
+    <span className={`font-medium text-sm tracking-wider ml-4 px-2.5 py-1 ${titleColors[title ?? ""] || "text-gray-900 bg-gray-600/10"} ${isExpanded && "invisible"} rounded-full`}>
       {totalAmount}
     </span>
   );
@@ -66,7 +66,24 @@ export function BudgetCategory({
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
-  const totalAmount = items.reduce((sum, tx) => sum + tx.amount, 0);
+  const getFrequencyMultiplier = (item: Item) => {
+    switch (item.frequency) {
+      case "weekly":
+        return 4; // assume 4 weeks per month
+      case "bi-weekly":
+        return 2; // 2 pay periods per month
+      case "semi-monthly":
+        return 2; // 2 payments per month
+      case "monthly":
+        return 1; // 1 payment per month
+      default:
+        return 1;
+    }
+  };
+
+  const totalAmount = items.reduce((sum, item) => {
+    return sum + item.amount * getFrequencyMultiplier(item);
+  }, 0);
 
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_15px_rgba(0,0,0,0.1)] transition-colors">
