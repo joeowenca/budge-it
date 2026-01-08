@@ -1,18 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
+import { frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
+import { z } from "zod";
 
 type Category = {
   id: number;
   name: string;
 };
 
-type Item = {
+export type Item = {
   id: number;
   name: string | null;
   amount: number;
+  frequency: z.infer<typeof frequencyTypeSchema>;
+  dayOfWeek: z.infer<typeof dayOfWeekTypeSchema>;
+  dayOfMonth: number | null;
+  dayOfMonthIsLast: boolean;
+  secondDayOfMonth: number | null;
+  secondDayOfMonthIsLast: boolean;
   startDate: Date | string | null;
 };
 
@@ -95,7 +102,7 @@ export function BudgetCategory({
               {/* Total at bottom - Tally sheet style */}
               <div className="pt-1">
                 <div className="flex items-center justify-between mt-1">
-                  <span className="font-medium">Total</span>
+                  <span className="font-medium">Monthly total</span>
                   <TotalAmount title={title} totalAmount={formatAmount(totalAmount)} />
                 </div>
               </div>
