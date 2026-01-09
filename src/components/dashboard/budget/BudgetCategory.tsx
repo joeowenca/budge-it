@@ -8,6 +8,7 @@ import { z } from "zod";
 
 type Category = {
   id: number;
+  emoji: string;
   name: string;
 };
 
@@ -48,9 +49,9 @@ interface TotalAmountProps {
 }
 
 const titleColors: Record<string, string> = {
-  Income: "text-blue-600 bg-primary/10",
-  Expenses: "text-red-600 bg-red-600/10",
-  Savings: "text-green-700 bg-green-600/10",
+  Income: "text-blue-800 bg-primary/10",
+  Expenses: "text-red-800 bg-red-600/10",
+  Savings: "text-green-900 bg-green-600/10",
 };
 
 function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
@@ -73,13 +74,13 @@ export function BudgetCategory({
   const getFrequencyMultiplier = (item: Item) => {
     switch (item.frequency) {
       case "weekly":
-        return 4; // assume 4 weeks per month
+        return 4;
       case "bi-weekly":
-        return 2; // 2 pay periods per month
+        return 2;
       case "semi-monthly":
-        return 2; // 2 payments per month
+        return 2;
       case "monthly":
-        return 1; // 1 payment per month
+        return 1;
       default:
         return 1;
     }
@@ -98,7 +99,7 @@ export function BudgetCategory({
   };
 
   return (
-    <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_15px_rgba(0,0,0,0.1)] transition-colors">
+    <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.12)] transition-colors">
       {/* Category Header - Clickable */}
       <div
         className="cursor-pointer select-none"
@@ -106,7 +107,7 @@ export function BudgetCategory({
       >
         <div className="flex items-center justify-between">
           <div className="flex flex-1 min-w-0 items-center gap-2">
-            <span className="font-medium truncate">{category.name}</span>
+            <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
             <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isExpanded ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
           </div>
           <div className="flex items-center gap-2 relative">
@@ -116,10 +117,10 @@ export function BudgetCategory({
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className="p-1.5 rounded-full hover:text-white hover:bg-primary transition-colors cursor-pointer absolute right-0"
+                className="p-2 rounded-full hover:text-white hover:bg-primary hover:shadow-lg hover:shadow-primary/25 transition-all cursor-pointer absolute right-0"
                 aria-label="Edit category"
               >
-                <Pencil className="h-4.5 w-4.5" strokeWidth={2} />
+                <Pencil className="size-4.5" strokeWidth={2} />
               </button>
             )}
             <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />

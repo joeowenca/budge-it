@@ -85,7 +85,7 @@ export function BudgetItem({ item, isEditing = false }: BudgetItemProps) {
             {item.frequency === "bi-weekly" && "2x"}
             {item.frequency === "semi-monthly" && "2x"}
           </span>
-        <div className="font-medium px-2.5 py-1 text-yellow-800 bg-yellow-600/10 rounded-full tracking-wider">
+        <div className="font-medium px-2.5 py-1 text-yellow-900 bg-yellow-600/10 rounded-full tracking-wider">
           {formatAmount(item.amount)}
         </div>
       </div>
