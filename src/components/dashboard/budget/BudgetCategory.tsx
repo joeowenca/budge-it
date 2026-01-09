@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil, CheckIcon } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
 
 type Category = {
   id: number;
@@ -69,7 +70,9 @@ export function BudgetCategory({
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const activeItems = items.filter((item) => !item.isArchived);
+  const isEmpty = activeItems.length === 0;
+  const [isEditing, setIsEditing] = useState(isEmpty);
 
   const getFrequencyMultiplier = (item: Item) => {
     switch (item.frequency) {
@@ -86,56 +89,60 @@ export function BudgetCategory({
     }
   };
 
-  // Filter out archived items
-  const activeItems = items.filter((item) => !item.isArchived);
-
   const totalAmount = activeItems.reduce((sum, item) => {
     return sum + item.amount * getFrequencyMultiplier(item);
   }, 0);
 
   const toggleIsEditing = () => {
-    setIsEditing(!isEditing);
-    console.log("BudgetCategory isEditing:", category.name, !isEditing);
+    if (!isEmpty) {
+      setIsEditing(!isEditing);
+    }
   };
+
+  function toggleIsExpanded() {
+    if (!isEditing) {
+      onToggle();
+    }
+  }
 
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.12)] transition-colors">
       {/* Category Header - Clickable */}
       <div
-        className="cursor-pointer select-none"
-        onClick={onToggle}
+        className={`${(isEmpty || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
+        onClick={toggleIsExpanded}
       >
         <div className="flex items-center justify-between">
           <div className="flex flex-1 min-w-0 items-center gap-2">
             <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
-            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isExpanded ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
+            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isEditing && "hidden"} ${(isExpanded || isEmpty) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
           </div>
           <div className="flex items-center gap-2 relative">
-            {isExpanded && (
+            {(isExpanded || isEmpty) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className="p-2 rounded-full hover:text-white hover:bg-primary hover:shadow-lg hover:shadow-primary/25 transition-all cursor-pointer absolute right-0"
+                className={`p-2 rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed" : `hover:text-white ${isEditing ? "hover:bg-green-500 hover:shadow-green-500/25" : "hover:bg-primary hover:shadow-primary/25"} hover:shadow-lg cursor-pointer`} absolute right-0`}
                 aria-label="Edit category"
               >
-                <Pencil className="size-4.5" strokeWidth={2} />
+                {isEditing ? (
+                  <CheckIcon className={`size-4.5`} strokeWidth={2.5} />
+                ) : (
+                  <Pencil className="size-4.5" strokeWidth={2} />
+                )}
               </button>
             )}
-            <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
+            <TotalAmount title={title} isExpanded={(isExpanded || isEmpty)} totalAmount={formatAmount(totalAmount)} />
           </div>
         </div>
       </div>
 
       {/* Items - Only show when expanded */}
-      {isExpanded && (
+      {(isExpanded || isEmpty) && (
         <>
-          {activeItems.length === 0 ? (
-            <p className="text-xs text-muted-foreground pl-3">
-              No transactions yet
-            </p>
-          ) : (
+          {activeItems.length > 0 && (
             <div className="space-y-1 mt-3">
               {activeItems.map((item) => (
                 <BudgetItem
@@ -144,15 +151,23 @@ export function BudgetCategory({
                   isEditing={isEditing}
                 />
               ))}
-              {/* Total at bottom - Tally sheet style */}
-              <div className="pt-1">
-                <div className="flex items-center justify-between mt-1">
-                  <span className="font-medium">Monthly total</span>
-                  <TotalAmount title={title} totalAmount={formatAmount(totalAmount)} />
-                </div>
-              </div>
             </div>
           )}
+          {isEditing && <>
+            <Button
+              variant="ghost"
+              className="mb-0"
+            >
+              + Add Item
+            </Button>
+          </>}
+          {/* Total at bottom - Tally sheet style */}
+          <div className="pt-1">
+            <div className="flex items-center justify-between mt-1">
+              <span className="font-medium">Monthly total</span>
+              <TotalAmount title={title} totalAmount={formatAmount(totalAmount)} />
+            </div>
+          </div>
         </>
       )}
     </div>
