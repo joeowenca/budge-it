@@ -138,11 +138,11 @@
     - **Action 4** Create budget item `createBudgetItem`
         - Checks that the user is signed in 
         - Create a new budget item with the following fields based on the budgetItems schema found in `/src/db/schema.ts`
-- [ ] **Step 5.6** Refactor budget front-end to support 'add' actions (`/src/components/dashboard/budget` directory)
+- [x] **Step 5.6** Refactor budget front-end to support 'add' actions (`/src/components/dashboard/budget` directory)
     - [x] **Step 5.6.1 - State** Managing the local edit state
         - Each BudgetCategory component will have its own `edit` boolean state. By default, this state will be set to `false`, but if the BudgetCategory contains no BudgetItems, `edit` will be automatically updated to `true`. This check should happen when the component mounts. 
         - Each BudgetItem component (at `/src/components/dashboard/budget/BudgetItem.tsx`) will receive an `edit` prop from the parent BudgetCategory component, so the BudgetItem knows when to go into its edit state.
-    - [ ] **Step 5.6.2 - Add To Budget dialog**
+    - [x] **Step 5.6.2 - Add To Budget dialog**
         - Create `src/components/dashboard/budget/AddToBudgetDialog.tsx`.
             - Features:
                 - **Tabs** 3 tabs in this order to create the following items: Expense, Savings, Income
@@ -169,28 +169,16 @@
                                 - Return an error if the Second day of month is before or equal to the first day of month. They can't match, and second day of the month needs to be > First day of the month unless Second day of the month is set to '0/Last'.
                             - Cancel and Submit buttons in the footer of the dialog pop-up
                 - Connect to `/src/app/actions/budgetActions.ts` with the `addBudgetCategory`, `getBudgetCategory` `addBudgetItem` server actions.
-
-        - Create `src/components/dashboard/AddTransactionDialog.tsx`.
-            - Features:
-                - **Tabs** 3 tabs in this order to create the following items: Purchase, Expense, Income
-                    - **Purchase tab** 
-                        -Has the following fields:
-                            - Category (Combobox: Select existing category with the type "purchase" or create a new category with the type "purchase")
-                            - Amount
-                            - Date
-                            - Memo
-                        - Used to create a transaction with the type "Purchase" under the selected category
-                    - **Expense tab** 
-                        - Has the following fields:
-                            - Category (Combobox: Select existing category with the type "expense" or create a new category with the type "expense")
-                            - Label
-                            - Amount
-                            - (No date field yet, will just consider all expenses as monthly)
-                    - **Income tab** has the following fields:
-                        - Has the following fields:
-                            - Category (Combobox: Select existing category with the type "income" or create a new category with the type "income")
-                            - Label
-                            - Amount
-                            - (No date field yet, will just consider all income as monthly)
-                - **Add button** a button at the bottom of the dialog to create the transaction and/or category based on the tab selected and fields completed.
-            - Connect to `addTransaction` action. 
+- [ ] **Step 5.7** Budget edit state
+    - [x] **Step 5.7.1** Update and Delete server actions in `src/app/actions/budgetActions.ts`
+        - BudgetCategories and BudgetItems can be updated in the database
+        - Deleting a BudgetCategory or BudgetItem doesn't call the delete action yet. Insteadd, it calls the update action and sets the `is_archived` flag to true.
+    - [ ] **Step 5.7.2** Handling state
+        - Ensure archived BudgetCategories and BudgetItems are not rendered (only render if is_archived === false)
+        - Add an 'is_editing' boolean state to the BudgetCategory component. Pass it down to all BudgetItem components as a prop. When is_editing is true, the BudgetCategory and all child BudgetItems will then be in the edit state.
+    - [ ] **Step 5.7.3** Add Category UI
+        - Create an '+ Add Category' button that lives by default within each BudgetSection. This button will display below the category list within the BudgetSection component. 
+        - Clicking the button will replace the button with 3 fields: emoji, category name, and an add button
+        - Filling out the form and adding the category will by default set the category's type based on the section it was added under. For example, if you add a category within the 'Savings' section, the category type will be set to 'savings'.
+    - [ ] **Step 5.7.4** Renaming budget categories and items
+        - When the 'is_editing' state is true for both categories and items, replace their names with text fields to edit the names. Typing in a new name and then toggling the 'is_editing' state off will make the server action call to update the categories and items names in the database.

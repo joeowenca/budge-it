@@ -140,6 +140,24 @@ export const createBudgetItemSchema = z
     }
   });
 
+// Update Budget Category schema
+export const updateBudgetCategorySchema = z.object({
+  id: z.number().int().positive(),
+  emoji: z.string().optional(),
+  name: z.string().min(1, "Name is required").optional(),
+  sortOrder: z.number().optional(),
+  isArchived: z.boolean().optional(),
+});
+
+// Update Budget Item schema
+export const updateBudgetItemSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1, "Name is required").optional(),
+  amount: z.number().int().optional(),
+  sortOrder: z.number().optional(),
+  isArchived: z.boolean().optional(),
+});
+
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

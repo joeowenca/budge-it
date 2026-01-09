@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { budgetCategories, budgetItems, getBudgetCategoriesFilterSchema, getBudgetItemsFilterSchema, createBudgetCategorySchema, createBudgetItemSchema } from "@/db/schema";
+import { budgetCategories, budgetItems, getBudgetCategoriesFilterSchema, getBudgetItemsFilterSchema, createBudgetCategorySchema, createBudgetItemSchema, updateBudgetCategorySchema, updateBudgetItemSchema } from "@/db/schema";
 import { checkUser } from "@/lib/checkUser";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
@@ -236,6 +236,180 @@ export async function createBudgetItem(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create budget item",
+    };
+  }
+}
+
+/**
+ * Update a budget category
+ * @param data - Budget category update data with id and optional fields to update
+ */
+export async function updateBudgetCategory(
+  data: z.infer<typeof updateBudgetCategorySchema>
+): Promise<ActionResult> {
+  try {
+    // Check authentication
+    const user = await checkUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Validate input
+    const validationResult = updateBudgetCategorySchema.safeParse(data);
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.issues[0]?.message || "Invalid input",
+      };
+    }
+
+    const validatedData = validationResult.data;
+
+    // Verify that the budget category exists and belongs to the user
+    const category = await db.query.budgetCategories.findFirst({
+      where: and(
+        eq(budgetCategories.id, validatedData.id),
+        eq(budgetCategories.userId, user.id)
+      ),
+    });
+
+    if (!category) {
+      return { success: false, error: "Budget category not found" };
+    }
+
+    // Build update object with only provided fields
+    const updateData: {
+      emoji?: string;
+      name?: string;
+      sortOrder?: number;
+      isArchived?: boolean;
+      archivedAt?: Date | null;
+      updatedAt?: Date;
+    } = {};
+
+    if (validatedData.emoji !== undefined) {
+      updateData.emoji = validatedData.emoji;
+    }
+    if (validatedData.name !== undefined) {
+      updateData.name = validatedData.name;
+    }
+    if (validatedData.sortOrder !== undefined) {
+      updateData.sortOrder = validatedData.sortOrder;
+    }
+    if (validatedData.isArchived !== undefined) {
+      updateData.isArchived = validatedData.isArchived;
+      // Set archivedAt when archiving, clear when unarchiving
+      updateData.archivedAt = validatedData.isArchived ? new Date() : null;
+    }
+    // Always update the updatedAt timestamp
+    updateData.updatedAt = new Date();
+
+    // Update the category
+    const [updatedCategory] = await db
+      .update(budgetCategories)
+      .set(updateData)
+      .where(and(
+        eq(budgetCategories.id, validatedData.id),
+        eq(budgetCategories.userId, user.id)
+      ))
+      .returning();
+
+    revalidatePath("/budget");
+    revalidatePath("/");
+
+    return { success: true, data: updatedCategory };
+  } catch (error) {
+    console.error("Error updating budget category:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update budget category",
+    };
+  }
+}
+
+/**
+ * Update a budget item
+ * @param data - Budget item update data with id and optional fields to update
+ */
+export async function updateBudgetItem(
+  data: z.infer<typeof updateBudgetItemSchema>
+): Promise<ActionResult> {
+  try {
+    // Check authentication
+    const user = await checkUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Validate input
+    const validationResult = updateBudgetItemSchema.safeParse(data);
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.issues[0]?.message || "Invalid input",
+      };
+    }
+
+    const validatedData = validationResult.data;
+
+    // Verify that the budget item exists and belongs to the user
+    const item = await db.query.budgetItems.findFirst({
+      where: and(
+        eq(budgetItems.id, validatedData.id),
+        eq(budgetItems.userId, user.id)
+      ),
+    });
+
+    if (!item) {
+      return { success: false, error: "Budget item not found" };
+    }
+
+    // Build update object with only provided fields
+    const updateData: {
+      name?: string;
+      amount?: number;
+      sortOrder?: number;
+      isArchived?: boolean;
+      archivedAt?: Date | null;
+      updatedAt?: Date;
+    } = {};
+
+    if (validatedData.name !== undefined) {
+      updateData.name = validatedData.name;
+    }
+    if (validatedData.amount !== undefined) {
+      updateData.amount = validatedData.amount;
+    }
+    if (validatedData.sortOrder !== undefined) {
+      updateData.sortOrder = validatedData.sortOrder;
+    }
+    if (validatedData.isArchived !== undefined) {
+      updateData.isArchived = validatedData.isArchived;
+      // Set archivedAt when archiving, clear when unarchiving
+      updateData.archivedAt = validatedData.isArchived ? new Date() : null;
+    }
+    // Always update the updatedAt timestamp
+    updateData.updatedAt = new Date();
+
+    // Update the item
+    const [updatedItem] = await db
+      .update(budgetItems)
+      .set(updateData)
+      .where(and(
+        eq(budgetItems.id, validatedData.id),
+        eq(budgetItems.userId, user.id)
+      ))
+      .returning();
+
+    revalidatePath("/budget");
+    revalidatePath("/");
+
+    return { success: true, data: updatedItem };
+  } catch (error) {
+    console.error("Error updating budget item:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update budget item",
     };
   }
 }
