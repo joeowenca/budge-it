@@ -109,7 +109,7 @@
     - A collapsed category looks like "CategoryName >    $1234.56" where it's just the category name, a chevron pointing right, and the total amount on the right-side of the line item. 
     - An expanded category looks like "CategoryName v        " where it's just the category name, a chevron point down, and no total amount. Instead, the total is calculated at the bottom below all transactions like a tally sheet.
 
-- [ ] **Step 5.5**: UI - Authentication Page (`src/app/login/page.tsx`)
+- [x] **Step 5.5**: UI - Authentication Page (`src/app/login/page.tsx`)
     - **UI Layout:**
         - Create a centered layout using a Shadcn `Card` component.
         - Use Shadcn `Tabs` to toggle between "Log In" and "Sign Up" modes.
@@ -122,3 +122,75 @@
     - **Integration:**
         - Connect forms to `login` and `signup` actions from `src/app/actions/auth.ts`.
         - Handle successful redirects (handled by server action, but ensure client cleans up state).
+- [x] **Step 5.6** Create Budget server actions (`/src/app/actions/budgetActions.ts`)
+    - **Action 1** Get all budget categories `getBudgetCategories`
+        - Checks that the user is signed in
+        - Retrieves all budget categories for the user
+        - Accepts options for filtering, like only retrieve the budget categories that have the specified type. See the type definition in `/src/db/schema.ts` in the enum `budgetTypeEnum`.
+    - **Action 2** Get all budget items `getBudgetItems`
+        - Checks that the user is signed in
+        - Retrieves all budget items for the user
+        - Accepts options for filtering, like only retrieve the budget items that have the specified type. See the type definition in `/src/db/schema.ts` in the enum `budgetTypeEnum`.
+    - **Action 3** Create budget category `createBudgetCategory`
+        - Checks that the user is signed in 
+        - Checks if that budget category already exists based on userId, type, and name. If those 3 fields match another category, then it already exists. We should return that category.
+        - If this budget category doesn't exist, create a new budget category with the following fields based on the budgetCateories schema found in `/src/db/schema.ts`
+    - **Action 4** Create budget item `createBudgetItem`
+        - Checks that the user is signed in 
+        - Create a new budget item with the following fields based on the budgetItems schema found in `/src/db/schema.ts`
+- [ ] **Step 5.6** Refactor budget front-end to support 'add' actions (`/src/components/dashboard/budget` directory)
+    - [x] **Step 5.6.1 - State** Managing the local edit state
+        - Each BudgetCategory component will have its own `edit` boolean state. By default, this state will be set to `false`, but if the BudgetCategory contains no BudgetItems, `edit` will be automatically updated to `true`. This check should happen when the component mounts. 
+        - Each BudgetItem component (at `/src/components/dashboard/budget/BudgetItem.tsx`) will receive an `edit` prop from the parent BudgetCategory component, so the BudgetItem knows when to go into its edit state.
+    - [ ] **Step 5.6.2 - Add To Budget dialog**
+        - Create `src/components/dashboard/budget/AddToBudgetDialog.tsx`.
+            - Features:
+                - **Tabs** 3 tabs in this order to create the following items: Expense, Savings, Income
+                    - **Expense tab**
+                        - Automatically sets the item type to 'Expense' in the backend
+                    - **Savings tab**
+                        - Automatically sets the item type to 'Savings' in the backend
+                    - **Income tab**
+                        - Automatically sets the item type to 'Income' in the backend
+                    - **Shared fields between the 3 tabs**
+                        - All tabs will contain the following fields:
+                            - Category (Combobox: Select existing budgetCategory with the type "expense" or create a new budgetCategory with the type "expense"). Uses the server actions in `/src/app/actions/budgetActions.ts` to getBudgetCategories and createBudgetCategories
+                            - Name (text input field)
+                            - Amount (number input field)
+                            - Frequency (4 tabs to select a frequency type: Weekly, Bi-Weekly, Semi-Monthly, Monthly)
+                            - Start Date (Calendar date picker that inputs a timestamp)
+                            - If the frequency type is Weekly or Bi-Weekly, display the following field:
+                                - Day of week (Sunday, Monday, Tuesday, Wedesday, Thusday, Friday, Saturday). Can be a drop-down menu field
+                            - If the frequency type is Monthly, display the following field:
+                                - Day of month (1-31 as a number, or Last which enters in '0' in the backend but displays as 'Last' on the front end)
+                            - If the frequency type is Semi-Monthly, display the following fields:
+                                - First day of month (1-31 as a number)
+                                - Second day of month (1-31 as a number, or Last which enters in '0' in the backend but displays as 'Last' on the front end)
+                                - Return an error if the Second day of month is before or equal to the first day of month. They can't match, and second day of the month needs to be > First day of the month unless Second day of the month is set to '0/Last'.
+                            - Cancel and Submit buttons in the footer of the dialog pop-up
+                - Connect to `/src/app/actions/budgetActions.ts` with the `addBudgetCategory`, `getBudgetCategory` `addBudgetItem` server actions.
+
+        - Create `src/components/dashboard/AddTransactionDialog.tsx`.
+            - Features:
+                - **Tabs** 3 tabs in this order to create the following items: Purchase, Expense, Income
+                    - **Purchase tab** 
+                        -Has the following fields:
+                            - Category (Combobox: Select existing category with the type "purchase" or create a new category with the type "purchase")
+                            - Amount
+                            - Date
+                            - Memo
+                        - Used to create a transaction with the type "Purchase" under the selected category
+                    - **Expense tab** 
+                        - Has the following fields:
+                            - Category (Combobox: Select existing category with the type "expense" or create a new category with the type "expense")
+                            - Label
+                            - Amount
+                            - (No date field yet, will just consider all expenses as monthly)
+                    - **Income tab** has the following fields:
+                        - Has the following fields:
+                            - Category (Combobox: Select existing category with the type "income" or create a new category with the type "income")
+                            - Label
+                            - Amount
+                            - (No date field yet, will just consider all income as monthly)
+                - **Add button** a button at the bottom of the dialog to create the transaction and/or category based on the tab selected and fields completed.
+            - Connect to `addTransaction` action. 

@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { getCategories, getTransactions } from "@/app/actions/transactionActions";
+import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
 import { BudgetCategory } from "./BudgetCategory";
 
-type Category = Awaited<ReturnType<typeof getCategories>>[number];
-type Transaction = Awaited<ReturnType<typeof getTransactions>>[number];
+type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
+type BudgetItem = NonNullable<Awaited<ReturnType<typeof getBudgetItems>>["data"]>[number];
 
-interface CategoryWithTransactions extends Category {
-  transactions: Transaction[];
+interface CategoryWithBudgetItems extends Category {
+  budgetItems: BudgetItem[];
 }
 
 interface BudgetSectionProps {
   title: string;
-  categories: CategoryWithTransactions[];
+  categories: CategoryWithBudgetItems[];
 }
 
 export default function BudgetSection({ title, categories }: BudgetSectionProps) {
@@ -41,12 +41,17 @@ export default function BudgetSection({ title, categories }: BudgetSectionProps)
         ) : (
           categories.map((category) => {
             const isExpanded = expandedCategories.has(category.id);
+            // Map schema category (with 'name') to BudgetCategory expected format (with 'label')
+            const categoryForDisplay = {
+              id: category.id,
+              name: category.name,
+            };
 
             return (
               <BudgetCategory
                 key={category.id}
-                category={category}
-                transactions={category.transactions}
+                category={categoryForDisplay}
+                items={category.budgetItems}
                 title={title}
                 isExpanded={isExpanded}
                 onToggle={() => toggleCategory(category.id)}
