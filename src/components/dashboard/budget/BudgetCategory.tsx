@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
 import { z } from "zod";
@@ -21,6 +22,7 @@ export type Item = {
   secondDayOfMonth: number | null;
   secondDayOfMonthIsLast: boolean;
   startDate: Date | string | null;
+  isArchived: boolean;
 };
 
 interface BudgetCategoryProps {
@@ -66,6 +68,8 @@ export function BudgetCategory({
   isExpanded,
   onToggle,
 }: BudgetCategoryProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
   const getFrequencyMultiplier = (item: Item) => {
     switch (item.frequency) {
       case "weekly":
@@ -81,9 +85,17 @@ export function BudgetCategory({
     }
   };
 
-  const totalAmount = items.reduce((sum, item) => {
+  // Filter out archived items
+  const activeItems = items.filter((item) => !item.isArchived);
+
+  const totalAmount = activeItems.reduce((sum, item) => {
     return sum + item.amount * getFrequencyMultiplier(item);
   }, 0);
+
+  const toggleIsEditing = () => {
+    setIsEditing(!isEditing);
+    console.log("BudgetCategory isEditing:", category.name, !isEditing);
+  };
 
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_15px_rgba(0,0,0,0.1)] transition-colors">
@@ -95,25 +107,40 @@ export function BudgetCategory({
         <div className="flex items-center justify-between">
           <div className="flex flex-1 min-w-0 items-center gap-2">
             <span className="font-medium truncate">{category.name}</span>
-            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-transform ${isExpanded ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
+            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isExpanded ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
           </div>
-          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
+          <div className="flex items-center gap-2 relative">
+            {isExpanded && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleIsEditing();
+                }}
+                className="p-1.5 rounded-full hover:text-white hover:bg-primary transition-colors cursor-pointer absolute right-0"
+                aria-label="Edit category"
+              >
+                <Pencil className="h-4.5 w-4.5" strokeWidth={2} />
+              </button>
+            )}
+            <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
+          </div>
         </div>
       </div>
 
       {/* Items - Only show when expanded */}
       {isExpanded && (
         <>
-          {items.length === 0 ? (
+          {activeItems.length === 0 ? (
             <p className="text-xs text-muted-foreground pl-3">
               No transactions yet
             </p>
           ) : (
             <div className="space-y-1 mt-3">
-              {items.map((item) => (
+              {activeItems.map((item) => (
                 <BudgetItem
                   key={item.id}
                   item={item}
+                  isEditing={isEditing}
                 />
               ))}
               {/* Total at bottom - Tally sheet style */}

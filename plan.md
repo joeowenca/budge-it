@@ -173,7 +173,7 @@
     - [x] **Step 5.7.1** Update and Delete server actions in `src/app/actions/budgetActions.ts`
         - BudgetCategories and BudgetItems can be updated in the database
         - Deleting a BudgetCategory or BudgetItem doesn't call the delete action yet. Insteadd, it calls the update action and sets the `is_archived` flag to true.
-    - [ ] **Step 5.7.2** Handling state
+    - [x] **Step 5.7.2** Handling state
         - Ensure archived BudgetCategories and BudgetItems are not rendered (only render if is_archived === false)
         - Add an 'is_editing' boolean state to the BudgetCategory component. Pass it down to all BudgetItem components as a prop. When is_editing is true, the BudgetCategory and all child BudgetItems will then be in the edit state.
     - [ ] **Step 5.7.3** Add Category UI

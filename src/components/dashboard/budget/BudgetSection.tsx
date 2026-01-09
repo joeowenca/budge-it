@@ -36,28 +36,30 @@ export default function BudgetSection({ title, categories }: BudgetSectionProps)
     <div className="space-y-2">
       <h3 className="text-xl font-medium">{title}</h3>
       <div className="space-y-4">
-        {categories.length === 0 ? (
+        {categories.filter((category) => !category.isArchived).length === 0 ? (
           <p className="text-sm text-muted-foreground">No categories yet</p>
         ) : (
-          categories.map((category) => {
-            const isExpanded = expandedCategories.has(category.id);
-            // Map schema category (with 'name') to BudgetCategory expected format (with 'label')
-            const categoryForDisplay = {
-              id: category.id,
-              name: category.name,
-            };
+          categories
+            .filter((category) => !category.isArchived)
+            .map((category) => {
+              const isExpanded = expandedCategories.has(category.id);
+              // Map schema category (with 'name') to BudgetCategory expected format (with 'label')
+              const categoryForDisplay = {
+                id: category.id,
+                name: category.name,
+              };
 
-            return (
-              <BudgetCategory
-                key={category.id}
-                category={categoryForDisplay}
-                items={category.budgetItems}
-                title={title}
-                isExpanded={isExpanded}
-                onToggle={() => toggleCategory(category.id)}
-              />
-            );
-          })
+              return (
+                <BudgetCategory
+                  key={category.id}
+                  category={categoryForDisplay}
+                  items={category.budgetItems}
+                  title={title}
+                  isExpanded={isExpanded}
+                  onToggle={() => toggleCategory(category.id)}
+                />
+              );
+            })
         )}
       </div>
     </div>

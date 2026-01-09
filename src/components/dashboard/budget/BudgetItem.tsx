@@ -19,6 +19,7 @@ function formatDate(date: Date | string): string {
 
 interface BudgetItemProps {
   item: Item;
+  isEditing: boolean;
 }
 
 function getOrdinal(n: number): string {
@@ -42,7 +43,7 @@ function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function BudgetItem({ item }: BudgetItemProps) {
+export function BudgetItem({ item, isEditing = false }: BudgetItemProps) {
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
       <div className="flex items-center justify-between">
