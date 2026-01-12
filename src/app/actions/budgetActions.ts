@@ -416,8 +416,6 @@ export async function batchUpdateBudgetItems(
       return results;
     });
 
-    // Revalidate paths once at the end
-    revalidatePath("/budget");
     revalidatePath("/");
 
     return { success: true, data: updatedItems };
