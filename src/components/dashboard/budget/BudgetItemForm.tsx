@@ -1,13 +1,13 @@
 "use client";
 
-import { Item } from "./BudgetCategory";
+import { DraftItem } from "./BudgetCategory";
 import { Input } from "@/components/ui/input";
 import { Calendar, X } from "lucide-react";
 
 interface BudgetItemFormProps {
-  budgetItem: Item;
+  budgetItem: DraftItem;
   onNameChange: (value: string) => void;
-  onAmountChange: (value: number) => void;
+  onAmountChange: (value: string) => void;
   onArchive?: () => void;
 }
 
@@ -17,17 +17,8 @@ export function BudgetItemForm({
   onAmountChange,
   onArchive,
 }: BudgetItemFormProps) {
-  // Convert amount from cents to dollars for input
-  const amountInDollars = budgetItem.amount === 0 ? "" : (budgetItem.amount / 100).toString();
-
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow empty string, numbers, and decimals
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      // Convert dollars to cents
-      const cents = value === "" ? 0 : Math.round(parseFloat(value) * 100);
-      onAmountChange(cents);
-    }
+    onAmountChange(e.target.value);
   };
 
   return (
@@ -46,7 +37,7 @@ export function BudgetItemForm({
         <div className="flex items-center gap-1">
           <Input
             type="text"
-            value={amountInDollars}
+            value={budgetItem.amount}
             onChange={handleAmountChange}
             placeholder="0.00"
             className="font-medium w-20 px-2.5 py-1 text-yellow-900 bg-yellow-600/10 rounded-full tracking-wider text-sm h-7 text-right border-0 focus-visible:ring-0"

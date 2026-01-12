@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
@@ -28,7 +28,10 @@ export type Item = {
   secondDayOfMonthIsLast: boolean;
   startDate: Date | string | null;
   isArchived: boolean;
+  sortOrder: number;
 };
+
+export type DraftItem = Omit<Item, "amount"> & { amount: string };
 
 interface BudgetCategoryProps {
   category: Category;
@@ -74,10 +77,20 @@ export function BudgetCategory({
   onToggle,
 }: BudgetCategoryProps) {
   const router = useRouter();
-  const activeItems = items.filter((item) => !item.isArchived);
+  // Stable sort: sort by sortOrder (ascending) first, then by id (ascending) as tie-breaker
+  const activeItems = items
+    .filter((item) => !item.isArchived)
+    .sort((a, b) => {
+      const sortOrderA = a.sortOrder ?? 0;
+      const sortOrderB = b.sortOrder ?? 0;
+      if (sortOrderA !== sortOrderB) {
+        return sortOrderA - sortOrderB;
+      }
+      return a.id - b.id;
+    });
   const isEmpty = activeItems.length === 0;
   const [isEditing, setIsEditing] = useState(isEmpty);
-  const [editValues, setEditValues] = useState<Record<number, Item>>({});
+  const [editValues, setEditValues] = useState<Record<number, DraftItem>>({});
 
   const getFrequencyMultiplier = (item: Item) => {
     switch (item.frequency) {
@@ -98,35 +111,40 @@ export function BudgetCategory({
     return sum + item.amount * getFrequencyMultiplier(item);
   }, 0);
 
-  // Initialize editValues when isEditing becomes true
-  useEffect(() => {
-    if (isEditing && !isEmpty) {
-      const initialValues: Record<number, Item> = {};
+  const toggleIsEditing = () => {
+    if (isEmpty) return;
+
+    if (!isEditing) {
+      // ENTERING Edit Mode: Initialize values immediately
+      // Convert amount from cents (number) to dollars (string), preserving 2 decimal places
+      const initialValues: Record<number, DraftItem> = {};
       activeItems.forEach((item) => {
-        initialValues[item.id] = { ...item };
+        initialValues[item.id] = {
+          ...item,
+          amount: (item.amount / 100).toFixed(2),
+        };
       });
       setEditValues(initialValues);
-    }
-  }, [isEditing, isEmpty, activeItems]);
-
-  const toggleIsEditing = () => {
-    if (!isEmpty) {
-      setIsEditing(!isEditing);
-      if (isEditing) {
-        // Cancel: clear edit values
-        setEditValues({});
-      }
+      setIsEditing(true);
+    } else {
+      // EXITING Edit Mode (Cancel): Clear values
+      setEditValues({});
+      setIsEditing(false);
     }
   };
 
   const handleSave = async () => {
     // Construct array of updates from editValues
-    const updates = Object.values(editValues).map((item) => ({
-      id: item.id,
-      name: item.name || undefined,
-      amount: item.amount,
-      isArchived: item.isArchived,
-    }));
+    // Convert amount from dollars (string) back to cents (number)
+    const updates = Object.values(editValues).map((item) => {
+      const amountInCents = Math.round(parseFloat(item.amount) * 100);
+      return {
+        id: item.id,
+        name: item.name || undefined,
+        amount: isNaN(amountInCents) ? 0 : amountInCents,
+        isArchived: item.isArchived,
+      };
+    });
 
     // Call batchUpdateBudgetItems
     const result = await batchUpdateBudgetItems(updates);
@@ -150,11 +168,15 @@ export function BudgetCategory({
     }));
   };
 
-  const handleAmountChange = (itemId: number, value: number) => {
-    setEditValues((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], amount: value },
-    }));
+  const handleAmountChange = (itemId: number, value: string) => {
+    // Allow empty string, numbers, and decimals (including trailing dots)
+    // Prevent letters and symbols other than dots
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setEditValues((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], amount: value },
+      }));
+    }
   };
 
   const handleArchive = (itemId: number) => {
@@ -231,9 +253,9 @@ export function BudgetCategory({
             <div className="space-y-1 mt-3">
               {activeItems.map((item) => {
                 if (isEditing) {
-                  const editItem = editValues[item.id] || item;
+                  const editItem = editValues[item.id];
                   // Skip archived items in edit mode
-                  if (editItem.isArchived) {
+                  if (!editItem || editItem.isArchived) {
                     return null;
                   }
                   return (
