@@ -32,7 +32,7 @@ export function BudgetItemForm({
             placeholder="No label"
             className="font-medium h-7 px-2 text-sm border-1 focus-visible:ring-0 py-0"
           />
-          <div className="p-1.25 hover:text-white hover:bg-primary rounded-full cursor-pointer transition-all flex-shrink-0 ml-1.5 mr-3.5">
+          <div className="p-1.25 hover:text-white hover:bg-primary bg-muted rounded-full cursor-pointer transition-all flex-shrink-0 ml-1.5 mr-3.5">
             <Calendar className="size-4.5" strokeWidth={2} />
           </div>
         </div>
@@ -48,7 +48,7 @@ export function BudgetItemForm({
           {onArchive && (
             <button
               onClick={onArchive}
-              className="p-1.25 text-red-600 hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer flex-shrink-0"
+              className="p-1.25 text-red-600 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer flex-shrink-0"
               aria-label="Archive item"
             >
               <X className="size-4.5" strokeWidth={2.5} />

@@ -231,7 +231,7 @@ export function BudgetCategory({
           <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
           {isEditing && (
             <div 
-              className="text-sm text-red-600 p-1.25 hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer -translate-x-1"
+              className="text-sm text-red-600 p-1.25 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowArchiveDialog(true);
@@ -249,20 +249,20 @@ export function BudgetCategory({
                 e.stopPropagation();
                 toggleIsEditing();
               }}
-              className={`p-1.5 rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
+              className={`p-1.5 bg-muted rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
               aria-label="Edit category"
             >
               <Pencil className="size-4.5" strokeWidth={2} />
             </button>
           )}
           {isEditing && (
-            <div className="flex items-center gap-1 absolute right-0">
+            <div className="flex items-center gap-2 absolute right-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-1.5 text-muted-foreground rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
                 aria-label="Cancel editing"
               >
                 <Undo className="size-4.5" strokeWidth={2.5} />
@@ -272,7 +272,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   handleSave();
                 }}
-                className={`p-1.5 rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
+                className={`p-1.25 bg-muted rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
                 aria-label="Save changes"
               >
                 <CheckIcon className="size-4.5" strokeWidth={3} />
@@ -352,13 +352,13 @@ export function BudgetCategory({
           <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2">
             <div
               onClick={() => setShowArchiveDialog(false)}
-              className="p-1.5 mr-2 text-muted-foreground hover:text-white hover:bg-primary rounded-full transition-all cursor-pointer"
+              className="p-1.5 mr-2 text-muted-foreground bg-muted hover:text-white hover:bg-primary rounded-full transition-all cursor-pointer"
             >
               <Undo className="size-7" strokeWidth={2.5} />
             </div>
             <div
               onClick={handleArchiveCategory}
-              className="p-1.5 text-green-500 hover:text-white hover:bg-green-500 rounded-full transition-all cursor-pointer"
+              className="p-1.5 text-green-500 bg-muted hover:text-white hover:bg-green-500 rounded-full transition-all cursor-pointer"
             >
               <CheckIcon className="size-7" strokeWidth={3} />
             </div>
