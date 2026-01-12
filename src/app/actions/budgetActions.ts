@@ -304,20 +304,42 @@ export async function updateBudgetCategory(
     // Always update the updatedAt timestamp
     updateData.updatedAt = new Date();
 
-    // Update the category
-    const [updatedCategory] = await db
-      .update(budgetCategories)
-      .set(updateData)
-      .where(and(
-        eq(budgetCategories.id, validatedData.id),
-        eq(budgetCategories.userId, user.id)
-      ))
-      .returning();
+    // Use transaction to update category and archive all items if archiving
+    const result = await db.transaction(async (tx) => {
+      // Update the category
+      const [updatedCategory] = await tx
+        .update(budgetCategories)
+        .set(updateData)
+        .where(and(
+          eq(budgetCategories.id, validatedData.id),
+          eq(budgetCategories.userId, user.id)
+        ))
+        .returning();
+
+      // If archiving the category, archive all items within it
+      if (validatedData.isArchived === true) {
+        const archiveTimestamp = new Date();
+        await tx
+          .update(budgetItems)
+          .set({
+            isArchived: true,
+            archivedAt: archiveTimestamp,
+            updatedAt: archiveTimestamp,
+          })
+          .where(and(
+            eq(budgetItems.budgetCategoryId, validatedData.id),
+            eq(budgetItems.userId, user.id),
+            eq(budgetItems.isArchived, false) // Only archive items that aren't already archived
+          ));
+      }
+
+      return updatedCategory;
+    });
 
     revalidatePath("/budget");
     revalidatePath("/");
 
-    return { success: true, data: updatedCategory };
+    return { success: true, data: result };
   } catch (error) {
     console.error("Error updating budget category:", error);
     return {

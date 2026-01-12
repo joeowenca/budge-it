@@ -122,6 +122,7 @@ export default function BudgetSection({ title, categories, type }: BudgetSection
                 id: category.id,
                 emoji: category.emoji,
                 name: category.name,
+                type: category.type,
               };
 
               return (

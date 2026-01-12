@@ -2,18 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo } from "lucide-react";
+import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
-import { batchUpdateBudgetItems } from "@/app/actions/budgetActions";
-import { frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
+import { batchUpdateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
+import { frequencyTypeSchema, dayOfWeekTypeSchema, budgetTypeSchema } from "@/db/schema";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Category = {
   id: number;
   emoji: string;
   name: string;
+  type: z.infer<typeof budgetTypeSchema>;
 };
 
 export type Item = {
@@ -91,6 +100,7 @@ export function BudgetCategory({
   const isEmpty = activeItems.length === 0;
   const [isEditing, setIsEditing] = useState(isEmpty);
   const [editValues, setEditValues] = useState<Record<number, DraftItem>>({});
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
 
   const getFrequencyMultiplier = (item: Item) => {
     switch (item.frequency) {
@@ -189,6 +199,21 @@ export function BudgetCategory({
     }));
   };
 
+  const handleArchiveCategory = async () => {
+    const result = await updateBudgetCategory({
+      id: category.id,
+      isArchived: true,
+    });
+
+    if (result.success) {
+      setShowArchiveDialog(false);
+      setIsEditing(false);
+      router.refresh();
+    } else {
+      console.error("Failed to archive category:", result.error);
+    }
+  };
+
   function toggleIsExpanded() {
     if (!isEditing) {
       onToggle();
@@ -204,7 +229,17 @@ export function BudgetCategory({
           onClick={toggleIsExpanded}
         >
           <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
-          {isEditing && <div className="text-sm text-red-600 p-1.25 hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer -translate-x-1"><XIcon className="size-4.5" strokeWidth={2.5} /></div>}
+          {isEditing && (
+            <div 
+              className="text-sm text-red-600 p-1.25 hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer -translate-x-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowArchiveDialog(true);
+              }}
+            >
+              <XIcon className="size-4.5" strokeWidth={2.5} />
+            </div>
+          )}
           <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isEditing && "hidden"} ${(isExpanded || isEmpty) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
         </div>
         <div className="flex items-center gap-2 relative">
@@ -297,6 +332,39 @@ export function BudgetCategory({
           </div>
         </>
       )}
+
+      {/* Archive Confirmation Dialog */}
+      <Dialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <DialogContent showCloseButton={false} className="sm:max-w-sm min-w-0">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="p-2 rounded-full bg-yellow-100">
+                <TriangleAlert className="size-7 text-yellow-600" strokeWidth={2.5} />
+              </div>
+            </div>
+            <DialogTitle className="text-center text-xl mb-2">Are you sure?</DialogTitle>
+            <DialogDescription className="text-center text-md mb-1">
+              Archiving <b>{category.name}</b> will
+              <br />
+              archive all its <b>{category.type}{category.type.toString() === "expense" && "s"}</b>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2">
+            <div
+              onClick={() => setShowArchiveDialog(false)}
+              className="p-1.5 mr-2 text-muted-foreground hover:text-white hover:bg-primary rounded-full transition-all cursor-pointer"
+            >
+              <Undo className="size-7" strokeWidth={2.5} />
+            </div>
+            <div
+              onClick={handleArchiveCategory}
+              className="p-1.5 text-green-500 hover:text-white hover:bg-green-500 rounded-full transition-all cursor-pointer"
+            >
+              <CheckIcon className="size-7" strokeWidth={3} />
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
