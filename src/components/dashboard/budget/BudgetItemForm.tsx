@@ -22,33 +22,36 @@ export function BudgetItemForm({
   };
 
   return (
-    <div className="pl-2 py-1 pb-2 text-sm border-b-1">
+    <div className="py-2 pb-3 text-sm border-b-1">
       <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
+        <div className="flex flex-1 max-w-48 min-w-0">
           <Input
             type="text"
             value={budgetItem.name || ""}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="No label"
-            className="font-medium h-7 px-2 text-sm border-0 bg-transparent shadow-none focus-visible:ring-0 p-0"
+            className="font-medium h-7 px-2 text-sm border-1 focus-visible:ring-0 py-0"
           />
+          <div className="p-1.25 hover:text-white hover:bg-primary rounded-full cursor-pointer transition-all flex-shrink-0 ml-1.5 mr-3.5">
+            <Calendar className="size-4.5" strokeWidth={2} />
+          </div>
         </div>
-        <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4 mr-1" strokeWidth={2} />
         <div className="flex items-center gap-1">
+          <p className="text-yellow-900">$</p>
           <Input
             type="text"
             value={budgetItem.amount}
             onChange={handleAmountChange}
             placeholder="0.00"
-            className="font-medium w-20 px-2.5 py-1 text-yellow-900 bg-yellow-600/10 rounded-full tracking-wider text-sm h-7 text-right border-0 focus-visible:ring-0"
+            className="font-medium w-16 xl:w-20 px-1.5 py-1 text-yellow-900 bg-yellow-600/10 tracking-wider text-sm h-7"
           />
           {onArchive && (
             <button
               onClick={onArchive}
-              className="p-1 rounded-full hover:text-white hover:bg-red-500 hover:shadow-md hover:shadow-red-600/25 transition-all flex-shrink-0 ml-1"
+              className="p-1.25 text-red-600 hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer flex-shrink-0"
               aria-label="Archive item"
             >
-              <X className="h-4 w-4" strokeWidth={2.5} />
+              <X className="size-4.5" strokeWidth={2.5} />
             </button>
           )}
         </div>

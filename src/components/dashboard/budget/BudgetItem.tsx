@@ -46,9 +46,9 @@ function capitalizeFirstLetter(str: string): string {
 export function BudgetItem({ item, isEditing = false }: BudgetItemProps) {
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between truncate">
         <div className="flex-1 min-w-0">
-          <div className="font-medium truncate">
+          <div className="font-medium">
             {item.name || "No label"}
           </div>
           {item.frequency === "weekly" && item.dayOfWeek && (
@@ -69,7 +69,7 @@ export function BudgetItem({ item, isEditing = false }: BudgetItemProps) {
               {item.secondDayOfMonthIsLast
                 ? " and last day of the month"
                 : item.secondDayOfMonth
-                ? <> and <b>{getOrdinal(item.secondDayOfMonth)}</b></>
+                ? <> & <b>{getOrdinal(item.secondDayOfMonth)}</b></>
                 : ""}
             </div>
           )}

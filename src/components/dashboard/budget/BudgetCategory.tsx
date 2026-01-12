@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Pencil, CheckIcon, X as XIcon } from "lucide-react";
+import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
 import { batchUpdateBudgetItems } from "@/app/actions/budgetActions";
@@ -136,6 +136,9 @@ export function BudgetCategory({
   const handleSave = async () => {
     // Construct array of updates from editValues
     // Convert amount from dollars (string) back to cents (number)
+
+    if (isEmpty) return;
+
     const updates = Object.values(editValues).map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
       return {
@@ -195,54 +198,53 @@ export function BudgetCategory({
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.12)] transition-colors">
       {/* Category Header - Clickable */}
-      <div
-        className={`${(isEmpty || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
-        onClick={toggleIsExpanded}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex flex-1 min-w-0 items-center gap-2">
-            <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
-            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isEditing && "hidden"} ${(isExpanded || isEmpty) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
-          </div>
-          <div className="flex items-center gap-2 relative">
-            {(isExpanded || isEmpty) && !isEditing && (
+      <div className="flex items-center justify-between">
+        <div 
+          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(isEmpty || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
+          onClick={toggleIsExpanded}
+        >
+          <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
+          {isEditing && <div className="text-sm text-red-600 p-1.25 hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer -translate-x-1"><XIcon className="size-4.5" strokeWidth={2.5} /></div>}
+          <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isEditing && "hidden"} ${(isExpanded || isEmpty) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
+        </div>
+        <div className="flex items-center gap-2 relative">
+          {(isExpanded || isEmpty) && !isEditing && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleIsEditing();
+              }}
+              className={`p-1.5 rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
+              aria-label="Edit category"
+            >
+              <Pencil className="size-4.5" strokeWidth={2} />
+            </button>
+          )}
+          {isEditing && (
+            <div className="flex items-center gap-1 absolute right-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-2 rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary hover:shadow-primary/25 hover:shadow-lg cursor-pointer"} absolute right-0`}
-                aria-label="Edit category"
+                className={`p-1.5 text-muted-foreground rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                aria-label="Cancel editing"
               >
-                <Pencil className="size-4.5" strokeWidth={2} />
+                <Undo className="size-4.5" strokeWidth={2.5} />
               </button>
-            )}
-            {isEditing && (
-              <div className="flex items-center gap-2 absolute right-0">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleIsEditing();
-                  }}
-                  className="p-2 rounded-full transition-all hover:text-white hover:bg-red-500 hover:shadow-red-500/25 hover:shadow-lg cursor-pointer"
-                  aria-label="Cancel editing"
-                >
-                  <XIcon className="size-4.5" strokeWidth={2.5} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSave();
-                  }}
-                  className="p-2 rounded-full transition-all hover:text-white hover:bg-green-500 hover:shadow-green-500/25 hover:shadow-lg cursor-pointer"
-                  aria-label="Save changes"
-                >
-                  <CheckIcon className="size-4.5" strokeWidth={2.5} />
-                </button>
-              </div>
-            )}
-            <TotalAmount title={title} isExpanded={(isExpanded || isEmpty)} totalAmount={formatAmount(totalAmount)} />
-          </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSave();
+                }}
+                className={`p-1.5 rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
+                aria-label="Save changes"
+              >
+                <CheckIcon className="size-4.5" strokeWidth={3} />
+              </button>
+            </div>
+          )}
+          <TotalAmount title={title} isExpanded={(isExpanded || isEmpty)} totalAmount={formatAmount(totalAmount)} />
         </div>
       </div>
 
