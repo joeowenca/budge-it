@@ -328,11 +328,11 @@ export async function updateBudgetCategory(
 }
 
 /**
- * Update a budget item
- * @param data - Budget item update data with id and optional fields to update
+ * Batch update budget items
+ * @param dataArray - Array of budget item update data with id and optional fields to update
  */
-export async function updateBudgetItem(
-  data: z.infer<typeof updateBudgetItemSchema>
+export async function batchUpdateBudgetItems(
+  dataArray: z.infer<typeof updateBudgetItemSchema>[]
 ): Promise<ActionResult> {
   try {
     // Check authentication
@@ -341,8 +341,8 @@ export async function updateBudgetItem(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Validate input
-    const validationResult = updateBudgetItemSchema.safeParse(data);
+    // Validate input array
+    const validationResult = z.array(updateBudgetItemSchema).safeParse(dataArray);
     if (!validationResult.success) {
       return {
         success: false,
@@ -350,66 +350,82 @@ export async function updateBudgetItem(
       };
     }
 
-    const validatedData = validationResult.data;
+    const validatedDataArray = validationResult.data;
 
-    // Verify that the budget item exists and belongs to the user
-    const item = await db.query.budgetItems.findFirst({
-      where: and(
-        eq(budgetItems.id, validatedData.id),
-        eq(budgetItems.userId, user.id)
-      ),
+    // Use transaction to update all items
+    const updatedItems = await db.transaction(async (tx) => {
+      const results = [];
+
+      for (const validatedData of validatedDataArray) {
+        // Verify that the budget item exists and belongs to the user
+        const item = await tx.query.budgetItems.findFirst({
+          where: and(
+            eq(budgetItems.id, validatedData.id),
+            eq(budgetItems.userId, user.id)
+          ),
+        });
+
+        if (!item) {
+          throw new Error(`Budget item with id ${validatedData.id} not found`);
+        }
+
+        // Build update object with only provided fields
+        const updateData: {
+          name?: string;
+          amount?: number;
+          sortOrder?: number;
+          isArchived?: boolean;
+          archivedAt?: Date | null;
+          updatedAt?: Date;
+        } = {};
+
+        if (validatedData.name !== undefined) {
+          updateData.name = validatedData.name;
+        }
+        if (validatedData.amount !== undefined) {
+          updateData.amount = validatedData.amount;
+        }
+        if (validatedData.sortOrder !== undefined) {
+          updateData.sortOrder = validatedData.sortOrder;
+        }
+        if (validatedData.isArchived !== undefined) {
+          updateData.isArchived = validatedData.isArchived;
+          // Set archivedAt when archiving, clear when unarchiving
+          updateData.archivedAt = validatedData.isArchived ? new Date() : null;
+        }
+        // Always update the updatedAt timestamp
+        updateData.updatedAt = new Date();
+
+        // Update the item
+        const updatedItemResult = await tx
+          .update(budgetItems)
+          .set(updateData)
+          .where(and(
+            eq(budgetItems.id, validatedData.id),
+            eq(budgetItems.userId, user.id)
+          ))
+          .returning();
+
+        if (updatedItemResult.length === 0) {
+          throw new Error(`Budget item with id ${validatedData.id} not found or unauthorized`);
+        }
+
+        results.push(updatedItemResult[0]);
+      }
+
+      return results;
     });
 
-    if (!item) {
-      return { success: false, error: "Budget item not found" };
-    }
-
-    // Build update object with only provided fields
-    const updateData: {
-      name?: string;
-      amount?: number;
-      sortOrder?: number;
-      isArchived?: boolean;
-      archivedAt?: Date | null;
-      updatedAt?: Date;
-    } = {};
-
-    if (validatedData.name !== undefined) {
-      updateData.name = validatedData.name;
-    }
-    if (validatedData.amount !== undefined) {
-      updateData.amount = validatedData.amount;
-    }
-    if (validatedData.sortOrder !== undefined) {
-      updateData.sortOrder = validatedData.sortOrder;
-    }
-    if (validatedData.isArchived !== undefined) {
-      updateData.isArchived = validatedData.isArchived;
-      // Set archivedAt when archiving, clear when unarchiving
-      updateData.archivedAt = validatedData.isArchived ? new Date() : null;
-    }
-    // Always update the updatedAt timestamp
-    updateData.updatedAt = new Date();
-
-    // Update the item
-    const [updatedItem] = await db
-      .update(budgetItems)
-      .set(updateData)
-      .where(and(
-        eq(budgetItems.id, validatedData.id),
-        eq(budgetItems.userId, user.id)
-      ))
-      .returning();
-
+    // Revalidate paths once at the end
     revalidatePath("/budget");
     revalidatePath("/");
 
-    return { success: true, data: updatedItem };
+    return { success: true, data: updatedItems };
   } catch (error) {
-    console.error("Error updating budget item:", error);
+    console.error("Error batch updating budget items:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update budget item",
+      error: error instanceof Error ? error.message : "Failed to batch update budget items",
     };
   }
 }
