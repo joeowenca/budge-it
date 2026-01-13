@@ -65,9 +65,9 @@ interface TotalAmountProps {
 }
 
 const titleColors: Record<string, string> = {
-  Income: "text-blue-800 bg-primary/10",
-  Expenses: "text-red-800 bg-red-600/10",
-  Savings: "text-green-900 bg-green-600/10",
+  Income: "text-primary bg-primary/10",
+  Expenses: "text-red-600 bg-red-600/10",
+  Savings: "text-green-700 bg-green-600/10",
 };
 
 function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
@@ -136,11 +136,13 @@ export function BudgetCategory({
       });
       setEditValues(initialValues);
       setIsEditing(true);
-    } else {
-      // EXITING Edit Mode (Cancel): Clear values
-      setEditValues({});
-      setIsEditing(false);
+
+      return;
     }
+
+    // EXITING Edit Mode (Cancel): Clear values
+    setEditValues({});
+    setIsEditing(false);
   };
 
   const handleSave = async () => {

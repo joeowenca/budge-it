@@ -1,4 +1,5 @@
 import { Item } from "./BudgetCategory";
+import { Calendar } from "lucide-react";
 
 function formatAmount(amount: number): string {
   // Amount is stored in cents, convert to dollars
@@ -40,52 +41,70 @@ function getOrdinal(n: number): string {
 
 function capitalizeFirstLetter(str: string): string {
   if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
+
+  const trimmed = str.slice(0, 3);
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function getLastDayOfCurrentMonth(): number {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+}
+
+type DateDescriptionProps = {
+  item: Item;
+}
+
+export function DateDescription({ item }: DateDescriptionProps) {
+  return (
+    <div className="flex text-xs text-muted-foreground">
+      <Calendar className="size-3.5 mt-0.25 mr-1" />
+      {item.frequency === "weekly" && item.dayOfWeek && (
+        <>
+          {capitalizeFirstLetter(item.dayOfWeek)}
+        </>
+      )}
+
+      {item.frequency === "bi-weekly" && item.dayOfWeek && (
+        <>
+          Second {capitalizeFirstLetter(item.dayOfWeek)}
+        </>
+      )}
+
+      {item.frequency === "semi-monthly" && item.dayOfMonth && (
+        <>
+          {getOrdinal(item.dayOfMonth)} &
+          {item.secondDayOfMonthIsLast
+            ? ` ${getLastDayOfCurrentMonth()}`
+            : item.secondDayOfMonth
+            ? <> {getOrdinal(item.secondDayOfMonth)}</>
+            : ""}
+        </>
+      )}
+
+      {item.frequency === "monthly" && item.dayOfMonth && (
+        <>{getOrdinal(item.dayOfMonth)}</>
+      )}
+    </div>
+  );
 }
 
 export function BudgetItem({ item, isEditing = false }: BudgetItemProps) {
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
-      <div className="flex items-center justify-between truncate">
+      <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
-          <div className="font-medium">
+          <div className="font-medium truncate">
             {item.name || "No label"}
           </div>
-          {item.frequency === "weekly" && item.dayOfWeek && (
-            <div className="text-xs text-muted-foreground">
-              Every <b>{capitalizeFirstLetter(item.dayOfWeek)}</b>
-            </div>
-          )}
-
-          {item.frequency === "bi-weekly" && item.dayOfWeek && (
-            <div className="text-xs text-muted-foreground">
-              Every second <b>{capitalizeFirstLetter(item.dayOfWeek)}</b>
-            </div>
-          )}
-
-          {item.frequency === "semi-monthly" && item.dayOfMonth && (
-            <div className="text-xs text-muted-foreground">
-              Every <b>{getOrdinal(item.dayOfMonth)}</b>
-              {item.secondDayOfMonthIsLast
-                ? " and last day of the month"
-                : item.secondDayOfMonth
-                ? <> & <b>{getOrdinal(item.secondDayOfMonth)}</b></>
-                : ""}
-            </div>
-          )}
-
-          {item.frequency === "monthly" && item.dayOfMonth && (
-            <div className="text-xs text-muted-foreground">
-              Every <b>{getOrdinal(item.dayOfMonth)}</b>
-            </div>
-          )}
+          <DateDescription item={item} />
         </div>
         <span className="text-xs text-muted-foreground tracking-[0.2em] ml-4 mr-1">
             {item.frequency === "weekly" && "4x"}
             {item.frequency === "bi-weekly" && "2x"}
             {item.frequency === "semi-monthly" && "2x"}
           </span>
-        <div className="font-medium px-2.5 py-1 text-yellow-900 bg-yellow-600/10 rounded-full tracking-wider">
+        <div className="font-medium px-2.5 py-1 text-yellow-800 bg-yellow-500/15 rounded-full tracking-wider">
           {formatAmount(item.amount)}
         </div>
       </div>
