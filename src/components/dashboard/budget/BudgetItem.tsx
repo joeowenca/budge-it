@@ -57,7 +57,7 @@ type DateDescriptionProps = {
 
 export function DateDescription({ item }: DateDescriptionProps) {
   return (
-    <div className="flex text-xs text-muted-foreground">
+    <div className="flex text-xs font-semibold text-muted-foreground">
       <Calendar className="size-3.5 mt-0.25 mr-1" />
       {item.frequency === "weekly" && item.dayOfWeek && (
         <>

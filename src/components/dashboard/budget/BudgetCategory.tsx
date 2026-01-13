@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
-import { batchUpdateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
-import { frequencyTypeSchema, dayOfWeekTypeSchema, budgetTypeSchema } from "@/db/schema";
+import { batchUpdateBudgetItems, batchCreateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
+import { budgetTypeSchema, ReadBudgetItemType, CreateBudgetItemType } from "@/db/schema";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,26 +24,14 @@ type Category = {
   type: z.infer<typeof budgetTypeSchema>;
 };
 
-export type Item = {
-  id: number;
-  name: string | null;
-  amount: number;
-  frequency: z.infer<typeof frequencyTypeSchema>;
-  dayOfWeek: z.infer<typeof dayOfWeekTypeSchema>;
-  dayOfMonth: number | null;
-  dayOfMonthIsLast: boolean;
-  secondDayOfMonth: number | null;
-  secondDayOfMonthIsLast: boolean;
-  startDate: Date | string | null;
-  isArchived: boolean;
-  sortOrder: number;
-};
+export type CreateItemDraft = Omit<CreateBudgetItemType, "amount"> & { amount: string, tempId: number };
+export type UpdateItemDraft = Omit<ReadBudgetItemType, "amount"> & { amount: string };
 
-export type DraftItem = Omit<Item, "amount"> & { amount: string };
+let tempIdCounter = -1;
 
 interface BudgetCategoryProps {
   category: Category;
-  items: Item[];
+  items: ReadBudgetItemType[];
   title: string;
   isExpanded: boolean;
   onToggle: () => void;
@@ -99,10 +86,27 @@ export function BudgetCategory({
     });
   const isEmpty = activeItems.length === 0;
   const [isEditing, setIsEditing] = useState(isEmpty);
-  const [editValues, setEditValues] = useState<Record<number, DraftItem>>({});
+  const [editValues, setEditValues] = useState<Record<number, UpdateItemDraft>>({});
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
+  const [newItem, setNewItem] = useState<CreateItemDraft>({
+    tempId: tempIdCounter--,
+    budgetCategoryId: category.id,
+    type: category.type,
+    name: "",
+    amount: "",
+    frequency: "monthly",
+    dayOfWeek: null,
+    dayOfMonth: 1,
+    dayOfMonthIsLast: false,
+    secondDayOfMonth: null,
+    secondDayOfMonthIsLast: false,
+    startDate: new Date(),
+    isArchived: false,
+    sortOrder: 0,
+  });
 
-  const getFrequencyMultiplier = (item: Item) => {
+  const getFrequencyMultiplier = (item: ReadBudgetItemType) => {
     switch (item.frequency) {
       case "weekly":
         return 4;
@@ -121,13 +125,39 @@ export function BudgetCategory({
     return sum + item.amount * getFrequencyMultiplier(item);
   }, 0);
 
+  const resetNewItem = () => {
+    setNewItem({
+      tempId: tempIdCounter--,
+      budgetCategoryId: category.id,
+      type: category.type,
+      name: "",
+      amount: "",
+      frequency: "monthly",
+      dayOfWeek: null,
+      dayOfMonth: 1,
+      dayOfMonthIsLast: false,
+      secondDayOfMonth: null,
+      secondDayOfMonthIsLast: false,
+      startDate: new Date(),
+      isArchived: false,
+      sortOrder: 0,
+    });
+  }
+
+  const resetEditState = () => {
+    setEditValues({});
+    setNewItems([]);
+    resetNewItem();
+    setIsEditing(false);
+  }
+
   const toggleIsEditing = () => {
     if (isEmpty) return;
 
     if (!isEditing) {
       // ENTERING Edit Mode: Initialize values immediately
       // Convert amount from cents (number) to dollars (string), preserving 2 decimal places
-      const initialValues: Record<number, DraftItem> = {};
+      const initialValues: Record<number, UpdateItemDraft> = {};
       activeItems.forEach((item) => {
         initialValues[item.id] = {
           ...item,
@@ -141,8 +171,7 @@ export function BudgetCategory({
     }
 
     // EXITING Edit Mode (Cancel): Clear values
-    setEditValues({});
-    setIsEditing(false);
+    resetEditState();
   };
 
   const handleSave = async () => {
@@ -161,18 +190,40 @@ export function BudgetCategory({
       };
     });
 
-    // Call batchUpdateBudgetItems
-    const result = await batchUpdateBudgetItems(updates);
+    // Construct array of new items to create
+    const creates: CreateBudgetItemType[] = newItems.map((item) => {
+      const amountInCents = Math.round(parseFloat(item.amount) * 100);
+      return {
+        budgetCategoryId: category.id,
+        type: category.type,
+        name: item.name || "",
+        amount: isNaN(amountInCents) ? 0 : amountInCents,
+        frequency: item.frequency,
+        startDate: item.startDate ? new Date(item.startDate) : new Date(),
+        dayOfWeek: item.dayOfWeek,
+        dayOfMonth: item.dayOfMonth ?? undefined,
+        dayOfMonthIsLast: item.dayOfMonthIsLast,
+        secondDayOfMonth: item.secondDayOfMonth ?? undefined,
+        secondDayOfMonthIsLast: item.secondDayOfMonthIsLast,
+        sortOrder: item.sortOrder,
+        isArchived: item.isArchived
+      };
+    });
 
-    if (result.success) {
+    // Call batchUpdateBudgetItems and batchCreateBudgetItems
+    const [updateResult, createResult] = await Promise.all([
+      updates.length > 0 ? batchUpdateBudgetItems(updates) : Promise.resolve({ success: true, data: [] }),
+      creates.length > 0 ? batchCreateBudgetItems(creates) : Promise.resolve({ success: true, data: [] }),
+    ]);
+
+    if (updateResult.success && createResult.success) {
       // Clear edit state and toggle isEditing to false
-      setEditValues({});
-      setIsEditing(false);
+      resetEditState();
       // Refresh the page data to show updated items
       router.refresh();
     } else {
       // Handle error (could add toast notification here)
-      console.error("Failed to update budget items:", result.error);
+      console.error("Failed to save budget items:", updateResult.data.error || createResult.data.error);
     }
   };
 
@@ -199,6 +250,31 @@ export function BudgetCategory({
       ...prev,
       [itemId]: { ...prev[itemId], isArchived: true },
     }));
+  };
+
+  const handleAdd = () => {
+    if (!newItem.name || !newItem.amount) {
+      return;
+    }
+    // Add the current newItem to the newItems array
+    setNewItems((prev) => [...prev, { ...newItem }]);
+    // Reset newItem to empty
+    resetNewItem();
+  };
+
+  const handleNewItemNameChange = (value: string) => {
+    setNewItem((prev) => ({ ...prev, name: value }));
+  };
+
+  const handleNewItemAmountChange = (value: string) => {
+    // Allow empty string, numbers, and decimals (including trailing dots)
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setNewItem((prev) => ({ ...prev, amount: value }));
+    }
+  };
+
+  const handleRemoveNewItem = (tempId: number) => {
+    setNewItems((prev) => prev.filter((item) => item.tempId !== tempId));
   };
 
   const handleArchiveCategory = async () => {
@@ -288,7 +364,7 @@ export function BudgetCategory({
       {/* Items - Only show when expanded */}
       {(isExpanded || isEmpty) && (
         <>
-          {activeItems.length > 0 && (
+          {(activeItems.length > 0 || (isEditing && newItems.length > 0)) && (
             <div className="space-y-1 mt-3">
               {activeItems.map((item) => {
                 if (isEditing) {
@@ -300,6 +376,7 @@ export function BudgetCategory({
                   return (
                     <BudgetItemForm
                       key={item.id}
+                      action="edit"
                       budgetItem={editItem}
                       onNameChange={(value) => handleNameChange(item.id, value)}
                       onAmountChange={(value) => handleAmountChange(item.id, value)}
@@ -315,16 +392,55 @@ export function BudgetCategory({
                   />
                 );
               })}
+              {isEditing && newItems.map((newItem) => (
+                <BudgetItemForm
+                  key={newItem.tempId}
+                  action="edit"
+                  budgetItem={newItem}
+                  onNameChange={(value) => {
+                    setNewItems((prev) =>
+                      prev.map((item) =>
+                        item.tempId === newItem.tempId ? { ...item, name: value } : item
+                      )
+                    );
+                  }}
+                  onAmountChange={(value) => {
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setNewItems((prev) =>
+                        prev.map((item) =>
+                          item.tempId === newItem.tempId ? { ...item, amount: value } : item
+                        )
+                      );
+                    }
+                  }}
+                  onArchive={() => handleRemoveNewItem(newItem.tempId)}
+                />
+              ))}
+              {isEditing && (
+                <BudgetItemForm
+                  action="add"
+                  budgetItem={newItem}
+                  onNameChange={handleNewItemNameChange}
+                  onAmountChange={handleNewItemAmountChange}
+                  type={category.type}
+                  onAdd={handleAdd}
+                />
+              )}
             </div>
           )}
-          {isEditing && <>
-            <Button
-              variant="ghost"
-              className="mb-0"
-            >
-              + Add Item
-            </Button>
-          </>}
+          {activeItems.length === 0 && isEditing && newItems.length === 0 && (
+            <div className="space-y-1 mt-3">
+              <BudgetItemForm
+                action="add"
+                budgetItem={newItem}
+                onNameChange={handleNewItemNameChange}
+                onAmountChange={handleNewItemAmountChange}
+                type={category.type}
+                onAdd={handleAdd}
+              />
+            </div>
+          )}
+
           {/* Total at bottom - Tally sheet style */}
           <div className="pt-1">
             <div className="flex items-center justify-between mt-1">
@@ -337,14 +453,14 @@ export function BudgetCategory({
 
       {/* Archive Confirmation Dialog */}
       <Dialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
-        <DialogContent showCloseButton={false} className="sm:max-w-sm min-w-0">
+        <DialogContent showCloseButton={false} className="sm:max-w-sm min-w-0 gap-2">
           <DialogHeader>
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center">
               <div className="p-2 rounded-full bg-yellow-100">
                 <TriangleAlert className="size-7 text-yellow-600" strokeWidth={2.5} />
               </div>
             </div>
-            <DialogTitle className="text-center text-xl mb-2">Are you sure?</DialogTitle>
+            <DialogTitle className="text-center text-xl">Are you sure?</DialogTitle>
             <DialogDescription className="text-center text-md mb-1">
               Archiving <b>{category.name}</b> will
               <br />

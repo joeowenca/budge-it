@@ -303,6 +303,7 @@ export function AddToBudgetDialog({
         dayOfMonthIsLast: data.dayOfMonthIsLast,
         secondDayOfMonth: data.secondDayOfMonth,
         secondDayOfMonthIsLast: data.secondDayOfMonthIsLast,
+        isArchived: false,
       };
 
       // Step 4: Create the budget item

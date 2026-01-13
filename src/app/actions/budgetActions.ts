@@ -350,6 +350,86 @@ export async function updateBudgetCategory(
 }
 
 /**
+ * Batch create budget items
+ * @param dataArray - Array of budget item data to create
+ */
+export async function batchCreateBudgetItems(
+  dataArray: z.infer<typeof createBudgetItemSchema>[]
+): Promise<ActionResult> {
+  try {
+    // Check authentication
+    const user = await checkUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Validate input array
+    const validationResult = z.array(createBudgetItemSchema).safeParse(dataArray);
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.issues[0]?.message || "Invalid input",
+      };
+    }
+
+    const validatedDataArray = validationResult.data;
+
+    // Use transaction to create all items
+    const createdItems = await db.transaction(async (tx) => {
+      const results = [];
+
+      for (const validatedData of validatedDataArray) {
+        // Verify that the budget category exists and belongs to the user
+        const category = await tx.query.budgetCategories.findFirst({
+          where: and(
+            eq(budgetCategories.id, validatedData.budgetCategoryId),
+            eq(budgetCategories.userId, user.id)
+          ),
+        });
+
+        if (!category) {
+          throw new Error(`Budget category with id ${validatedData.budgetCategoryId} not found`);
+        }
+
+        // Create new budget item
+        const [newItem] = await tx
+          .insert(budgetItems)
+          .values({
+            userId: user.id,
+            budgetCategoryId: validatedData.budgetCategoryId,
+            type: validatedData.type,
+            name: validatedData.name,
+            amount: validatedData.amount,
+            frequency: validatedData.frequency,
+            startDate: validatedData.startDate,
+            dayOfWeek: validatedData.dayOfWeek,
+            dayOfMonth: validatedData.dayOfMonth,
+            dayOfMonthIsLast: validatedData.dayOfMonthIsLast ?? false,
+            secondDayOfMonth: validatedData.secondDayOfMonth,
+            secondDayOfMonthIsLast: validatedData.secondDayOfMonthIsLast ?? false,
+            sortOrder: validatedData.sortOrder ?? 0,
+          })
+          .returning();
+
+        results.push(newItem);
+      }
+
+      return results;
+    });
+
+    revalidatePath("/");
+
+    return { success: true, data: createdItems };
+  } catch (error) {
+    console.error("Error batch creating budget items:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to batch create budget items",
+    };
+  }
+}
+
+/**
  * Batch update budget items
  * @param dataArray - Array of budget item update data with id and optional fields to update
  */
