@@ -1,4 +1,4 @@
-import { Item } from "./BudgetCategory";
+import { ReadBudgetItemType } from "@/db/schema";
 import { Calendar } from "lucide-react";
 
 function formatAmount(amount: number): string {
@@ -9,17 +9,8 @@ function formatAmount(amount: number): string {
   }).format(amount / 100);
 }
 
-function formatDate(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(dateObj);
-}
-
 interface BudgetItemProps {
-  item: Item;
+  item: ReadBudgetItemType;
   isEditing: boolean;
 }
 
@@ -52,12 +43,12 @@ function getLastDayOfCurrentMonth(): number {
 }
 
 type DateDescriptionProps = {
-  item: Item;
+  item: ReadBudgetItemType;
 }
 
 export function DateDescription({ item }: DateDescriptionProps) {
   return (
-    <div className="flex text-xs font-semibold text-muted-foreground">
+    <div className="flex text-xs font-semibold tracking-wide text-muted-foreground">
       <Calendar className="size-3.5 mt-0.25 mr-1" />
       {item.frequency === "weekly" && item.dayOfWeek && (
         <>
