@@ -5,6 +5,7 @@ import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions
 import { BudgetCategory } from "./BudgetCategory";
 import type { BudgetType } from "@/db/schema";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
+import { Plus } from "lucide-react";
 
 type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
 type BudgetItem = NonNullable<Awaited<ReturnType<typeof getBudgetItems>>["data"]>[number];
@@ -22,6 +23,7 @@ interface BudgetSectionProps {
 export default function BudgetSection({ title, categories, type }: BudgetSectionProps) {
   // Track expanded state for each category (default: all collapsed)
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [isAdding, setIsAdding] = useState(false);
 
   const toggleCategory = (categoryId: number) => {
     setExpandedCategories((prev) => {
@@ -35,10 +37,22 @@ export default function BudgetSection({ title, categories, type }: BudgetSection
     });
   };
 
+  const toggleIsAdding = () => {
+    setIsAdding(!isAdding);
+  }
+
   return (
     <div className="space-y-2">
-      <h3 className="text-xl font-medium pb-2">{title}</h3>
-      <div className="space-y-4">
+      <div className="flex items-center w-full px-1 py-2">
+        <h3 className="text-xl flex-1 font-medium">{title}</h3>
+        <div
+          onClick={() => {toggleIsAdding()}}
+          className={`${isAdding && "hidden"} rounded-full bg-muted cursor-pointer hover:text-white hover:bg-primary transition-all p-1.25`}
+        >
+          <Plus className="size-4.5" strokeWidth={2.75} />
+      </div>
+      </div>
+      <div className="space-y-4 mb-4">
         {categories.filter((category) => !category.isArchived).length === 0 ? (
           <p className="text-sm text-muted-foreground">No categories yet</p>
         ) : (
@@ -67,7 +81,7 @@ export default function BudgetSection({ title, categories, type }: BudgetSection
             })
         )}
       </div>
-      <BudgetCategoryForm type={type} />
+      <BudgetCategoryForm type={type} isAdding={isAdding} toggleIsAdding={(toggleIsAdding)} />
     </div>
   );
 }

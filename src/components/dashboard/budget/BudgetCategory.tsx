@@ -16,8 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BudgetCategoryForm } from "./BudgetCategoryForm";
 
-type Category = {
+export type Category = {
   id: number;
   emoji: string;
   name: string;
@@ -84,11 +85,12 @@ export function BudgetCategory({
       }
       return a.id - b.id;
     });
-  const isEmpty = activeItems.length === 0;
-  const [isEditing, setIsEditing] = useState(isEmpty);
+  const [isEditing, setIsEditing] = useState(getActiveItems().length === 0);
   const [editValues, setEditValues] = useState<Record<number, UpdateItemDraft>>({});
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
+  const [editCategoryEmoji, setEditCategoryEmoji] = useState(category.emoji);
+  const [editCategoryName, setEditCategoryName] = useState(category.name);
   const [newItem, setNewItem] = useState<CreateItemDraft>({
     tempId: tempIdCounter--,
     budgetCategoryId: category.id,
@@ -105,6 +107,21 @@ export function BudgetCategory({
     isArchived: false,
     sortOrder: 0,
   });
+
+  function getActiveItems(): ReadBudgetItemType[] {
+    return items.filter((item) => !item.isArchived).sort((a, b) => {
+      const sortOrderA = a.sortOrder ?? 0;
+      const sortOrderB = b.sortOrder ?? 0;
+      if (sortOrderA !== sortOrderB) {
+        return sortOrderA - sortOrderB;
+      }
+      return a.id - b.id;
+    });
+  }
+
+  function getTotalItemsLength(): number {
+    return activeItems.length + newItems.length;
+  }
 
   const getFrequencyMultiplier = (item: ReadBudgetItemType) => {
     switch (item.frequency) {
@@ -149,10 +166,13 @@ export function BudgetCategory({
     setNewItems([]);
     resetNewItem();
     setIsEditing(false);
+    // Restore original category values
+    setEditCategoryEmoji(category.emoji);
+    setEditCategoryName(category.name);
   }
 
   const toggleIsEditing = () => {
-    if (isEmpty) return;
+    if (getTotalItemsLength() === 0) return;
 
     if (!isEditing) {
       // ENTERING Edit Mode: Initialize values immediately
@@ -165,6 +185,9 @@ export function BudgetCategory({
         };
       });
       setEditValues(initialValues);
+      // Initialize category edit values with current category values
+      setEditCategoryEmoji(category.emoji);
+      setEditCategoryName(category.name);
       setIsEditing(true);
 
       return;
@@ -178,7 +201,7 @@ export function BudgetCategory({
     // Construct array of updates from editValues
     // Convert amount from dollars (string) back to cents (number)
 
-    if (isEmpty) return;
+    if (getTotalItemsLength() === 0) return;
 
     const updates = Object.values(editValues).map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
@@ -210,20 +233,36 @@ export function BudgetCategory({
       };
     });
 
-    // Call batchUpdateBudgetItems and batchCreateBudgetItems
-    const [updateResult, createResult] = await Promise.all([
+    // Update category if emoji or name changed
+    const categoryUpdate = 
+      editCategoryEmoji !== category.emoji || editCategoryName !== category.name
+        ? updateBudgetCategory({
+            id: category.id,
+            emoji: editCategoryEmoji,
+            name: editCategoryName,
+          })
+        : Promise.resolve({ success: true, data: [] });
+
+    // Call batchUpdateBudgetItems, batchCreateBudgetItems, and updateBudgetCategory
+    const [updateResult, createResult, categoryResult] = await Promise.all([
       updates.length > 0 ? batchUpdateBudgetItems(updates) : Promise.resolve({ success: true, data: [] }),
       creates.length > 0 ? batchCreateBudgetItems(creates) : Promise.resolve({ success: true, data: [] }),
+      categoryUpdate,
     ]);
 
-    if (updateResult.success && createResult.success) {
+    if (updateResult.success && createResult.success && categoryResult.success) {
       // Clear edit state and toggle isEditing to false
       resetEditState();
       // Refresh the page data to show updated items
       router.refresh();
     } else {
       // Handle error (could add toast notification here)
-      console.error("Failed to save budget items:", updateResult.data.error || createResult.data.error);
+      const errorMessage = 
+        (updateResult.success === false && 'error' in updateResult ? updateResult.error : undefined) ||
+        (createResult.success === false && 'error' in createResult ? createResult.error : undefined) ||
+        (categoryResult.success === false && 'error' in categoryResult ? categoryResult.error : undefined) ||
+        "Failed to save budget items";
+      console.error("Failed to save budget items:", errorMessage);
     }
   };
 
@@ -301,14 +340,25 @@ export function BudgetCategory({
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.12)] transition-colors">
       {/* Category Header - Clickable */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between m-0">
         <div 
-          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(isEmpty || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
+          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(getTotalItemsLength() === 0 || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
           onClick={toggleIsExpanded}
         >
-          <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
-          {isEditing && (
-            <div 
+          
+          {isEditing ? (
+            <>
+              <BudgetCategoryForm 
+                category={{
+                  ...category,
+                  emoji: editCategoryEmoji,
+                  name: editCategoryName,
+                }}
+                isEditing={true}
+                onEmojiChange={setEditCategoryEmoji}
+                onNameChange={setEditCategoryName}
+              />
+              <div 
               className="text-sm text-red-600 p-1.25 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
@@ -317,17 +367,22 @@ export function BudgetCategory({
             >
               <XIcon className="size-4.5" strokeWidth={2.5} />
             </div>
+            </>
+          ) : (
+            <>
+            <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
+            <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${(isExpanded) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
+            </>
           )}
-          <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${isEditing && "hidden"} ${(isExpanded || isEmpty) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
         </div>
         <div className="flex items-center gap-2 relative">
-          {(isExpanded || isEmpty) && !isEditing && (
+          {(isExpanded || getActiveItems().length === 0) && !isEditing && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleIsEditing();
               }}
-              className={`p-1.5 bg-muted rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
+              className={`p-1.5 bg-muted rounded-full transition-all ${activeItems.length === 0 ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
               aria-label="Edit category"
             >
               <Pencil className="size-4.5" strokeWidth={2} />
@@ -340,7 +395,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${activeItems.length === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
                 aria-label="Cancel editing"
               >
                 <Undo className="size-4.5" strokeWidth={2.5} />
@@ -350,22 +405,22 @@ export function BudgetCategory({
                   e.stopPropagation();
                   handleSave();
                 }}
-                className={`p-1.25 bg-muted rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
+                className={`p-1.25 bg-muted rounded-full transition-all ${getTotalItemsLength() === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
                 aria-label="Save changes"
               >
                 <CheckIcon className="size-4.5" strokeWidth={3} />
               </button>
             </div>
           )}
-          <TotalAmount title={title} isExpanded={(isExpanded || isEmpty)} totalAmount={formatAmount(totalAmount)} />
+          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
         </div>
       </div>
 
       {/* Items - Only show when expanded */}
-      {(isExpanded || isEmpty) && (
+      {isExpanded && (
         <>
-          {(activeItems.length > 0 || (isEditing && newItems.length > 0)) && (
-            <div className="space-y-1 mt-3">
+          {(isExpanded || isEditing) && (
+            <div className={`space-y-1 ${isEditing ? "mt-1" : "mt-3"}`}>
               {activeItems.map((item) => {
                 if (isEditing) {
                   const editItem = editValues[item.id];
@@ -429,7 +484,7 @@ export function BudgetCategory({
             </div>
           )}
           {activeItems.length === 0 && isEditing && newItems.length === 0 && (
-            <div className="space-y-1 mt-3">
+            <div className="space-y-1 mt-1">
               <BudgetItemForm
                 action="add"
                 budgetItem={newItem}
@@ -462,7 +517,7 @@ export function BudgetCategory({
             </div>
             <DialogTitle className="text-center text-xl">Are you sure?</DialogTitle>
             <DialogDescription className="text-center text-md mb-1">
-              Archiving <b>{category.name}</b> will
+              Archiving <b>{editCategoryName}</b> will
               <br />
               archive all its <b>{category.type}{category.type.toString() === "expense" && "s"}</b>
             </DialogDescription>

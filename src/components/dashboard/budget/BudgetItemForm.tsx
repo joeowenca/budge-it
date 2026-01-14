@@ -1,6 +1,6 @@
 "use client";
 
-import { DraftItem } from "./BudgetCategory";
+import { UpdateItemDraft, CreateItemDraft } from "@/components/dashboard/budget/BudgetCategory";
 import { Input } from "@/components/ui/input";
 import { Calendar, X, Plus } from "lucide-react";
 import { budgetTypeSchema } from "@/db/schema";
@@ -8,7 +8,7 @@ import { z } from "zod";
 
 interface BudgetItemFormProps {
   action: "edit" | "add";
-  budgetItem: DraftItem;
+  budgetItem: UpdateItemDraft | CreateItemDraft;
   onNameChange?: (value: string) => void;
   onAmountChange?: (value: string) => void;
   onArchive?: () => void;
@@ -76,7 +76,7 @@ export function BudgetItemForm({
               className="p-1.25 text-primary bg-muted hover:text-white hover:bg-primary disabled:text-primary disabled:bg-muted rounded-full transition-all cursor-pointer flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={`Add ${type}`}
             >
-              <Plus className="size-4.5" strokeWidth={2.5} />
+              <Plus className="size-4.5" strokeWidth={2.75} />
             </button>
           ) : (
             onArchive && (

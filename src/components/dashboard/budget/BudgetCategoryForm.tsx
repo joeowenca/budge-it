@@ -1,31 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createBudgetCategory } from "@/app/actions/budgetActions";
+import { Category } from "@/components/dashboard/budget/BudgetCategory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, XIcon, CheckIcon } from "lucide-react";
+import { Plus, Undo } from "lucide-react";
 import EmojiPicker, { EmojiClickData, EmojiStyle, Categories } from "emoji-picker-react";
 import { BudgetType } from "@/db/schema";
 
 type BudgetCategoryFormTypes = {
-    type: BudgetType;
+    type?: BudgetType;
+    category?: Category;
+    isAdding?: boolean;
+    toggleIsAdding?: () => void;
+    isEditing?: boolean;
+    onEmojiChange?: (emoji: string) => void;
+    onNameChange?: (name: string) => void;
 }
 
-export function BudgetCategoryForm({ type }: BudgetCategoryFormTypes) {
+export function BudgetCategoryForm({ type, category, isAdding = false, toggleIsAdding, isEditing = false, onEmojiChange, onNameChange }: BudgetCategoryFormTypes) {
     const router = useRouter();
 
     const [isCreating, setIsCreating] = useState(false);
-    const [newCategoryEmoji, setNewCategoryEmoji] = useState("💵");
-    const [newCategoryName, setNewCategoryName] = useState("");
+    // Initialize with category values if in edit mode, otherwise use defaults
+    const [newCategoryEmoji, setNewCategoryEmoji] = useState(isEditing && category ? category.emoji : "💵");
+    const [newCategoryName, setNewCategoryName] = useState(isEditing && category ? category.name : "");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Update local state when category prop changes (for edit mode)
+    useEffect(() => {
+        if (isEditing && category) {
+            setNewCategoryEmoji(category.emoji);
+            setNewCategoryName(category.name);
+        }
+    }, [isEditing, category]);
+
     const handleEmojiClick = (emojiData: EmojiClickData) => {
-    setNewCategoryEmoji(emojiData.emoji);
+    const newEmoji = emojiData.emoji;
+    setNewCategoryEmoji(newEmoji);
     setShowEmojiPicker(false);
+    // If in edit mode, notify parent of change
+    if (isEditing && onEmojiChange) {
+      onEmojiChange(newEmoji);
+    }
   };
 
   function getEmojiStyle(): EmojiStyle {
@@ -47,25 +68,24 @@ export function BudgetCategoryForm({ type }: BudgetCategoryFormTypes) {
     }
 
     setIsSubmitting(true);
-    
-    try {
-      const result = await createBudgetCategory({
-        type,
-        name: newCategoryName.trim(),
-        emoji: newCategoryEmoji,
-      });
 
-      if (result.success) {
-        // Reset form state
-        setIsCreating(false);
-        setNewCategoryName("");
-        setNewCategoryEmoji("💵");
-        setShowEmojiPicker(false);
-        // Refresh the page to show the new category
-        router.refresh();
-      } else {
-        console.error("Failed to create category:", result.error);
-        // You might want to show an error toast here
+    try {
+      if (type) {
+        const result = await createBudgetCategory({
+            type,
+            name: newCategoryName.trim(),
+            emoji: newCategoryEmoji,
+        });
+
+        if (result.success) {
+            // Reset form state
+            closeAddCategory();
+            // Refresh the page to show the new category
+            router.refresh();
+        } else {
+            console.error("Failed to create category:", result.error);
+            // You might want to show an error toast here
+        }
       }
     } catch (error) {
       console.error("Error creating category:", error);
@@ -79,30 +99,26 @@ export function BudgetCategoryForm({ type }: BudgetCategoryFormTypes) {
     setNewCategoryEmoji("💵");
     setNewCategoryName("");
     setShowEmojiPicker(false);
+
+    if (toggleIsAdding) {
+        toggleIsAdding();
+    }
   };
 
     return (
         <>
-            {!isCreating ? (
-                <Button
-                    variant="ghost"
-                    onClick={() => setIsCreating(true)}
-                    className="mt-2"
-                >
-                    + Add Category
-                </Button>
-                ) : (
-                <div className="flex items-center gap-2 mt-4 relative">
+            {(isAdding || isEditing) &&
+                <div className="flex items-center gap-2 relative">
                     {/* Emoji Trigger Button */}
                     <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                     <PopoverTrigger asChild>
                         <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className={`text-xl ${showEmojiPicker && "border-primary shadow-lg shadow-primary/25"}`}
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className={`text-xl ${showEmojiPicker && "border-primary bg-muted"}`}
                         >
-                        {newCategoryEmoji}
+                            {newCategoryEmoji}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -135,37 +151,44 @@ export function BudgetCategoryForm({ type }: BudgetCategoryFormTypes) {
                     type="text"
                     placeholder="Category name"
                     value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      setNewCategoryName(newName);
+                      // If in edit mode, notify parent of change
+                      if (isEditing && onNameChange) {
+                        onNameChange(newName);
+                      }
+                    }}
                     onKeyDown={(e) => {
-                        if (e.key === "Enter") {
+                        if (e.key === "Enter" && !isEditing) {
                         handleSubmit();
-                        } else if (e.key === "Escape") {
+                        } else if (e.key === "Escape" && !isEditing) {
                         closeAddCategory();
                         }
                     }}
-                    className="flex-1"
+                    className={`flex-1 font-semibold ${isEditing && "max-w-36 py-0"}`}
                     autoFocus
                     />
 
-                    <div className="flex items-center gap-2">
-                    {/* Cancel Button */}
-                    <div 
-                        onClick={closeAddCategory}
-                        className="rounded-full cursor-pointer hover:text-white hover:bg-red-500 hover:shadow-md hover:shadow-red-600/25 p-1.5 transition-all"
-                    >
-                        <XIcon className="size-5" strokeWidth={2.5} />
-                    </div>
+                    <div className={`flex items-center gap-2 ${isEditing && "hidden"}`}>
+                        {/* Cancel Button */}
+                        <div 
+                            onClick={closeAddCategory}
+                            className="rounded-full cursor-pointer bg-muted text-muted-foreground hover:text-white hover:bg-primary p-1.25 transition-all"
+                        >
+                            <Undo className="size-4.5" strokeWidth={2.5} />
+                        </div>
 
-                    {/* Confirm Button */}
-                    <div 
-                        onClick={handleSubmit}
-                        className={`rounded-full cursor-not-allowed ${!newCategoryName.trim() && "text-muted-foreground"} ${newCategoryName.trim() && "text-black cursor-pointer hover:text-white hover:bg-green-500 hover:shadow-md hover:shadow-green-500/25"} p-1.5 transition-all`}
-                    >
-                        {!isSubmitting ? <CheckIcon className="size-5" strokeWidth={2.5} /> : "..."}
-                    </div>
+                        {/* Confirm Button */}
+                        <div 
+                            onClick={handleSubmit}
+                            className={`rounded-full cursor-not-allowed text-primary bg-muted ${!newCategoryName.trim() && "opacity-50"} ${newCategoryName.trim() && "cursor-pointer hover:text-white hover:bg-primary"} p-1.25 transition-all`}
+                        >
+                            {!isSubmitting ? <Plus className="size-4.5" strokeWidth={2.75} /> : "..."}
+                        </div>
                     </div>
                 </div>
-            )}
+            }
         </>
     );
 }

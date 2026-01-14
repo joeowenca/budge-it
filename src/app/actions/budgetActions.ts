@@ -49,7 +49,10 @@ export async function getBudgetCategories(
     // Query database
     const categories = await db.query.budgetCategories.findMany({
       where: and(...conditions),
-      orderBy: (categories, { asc }) => [asc(categories.sortOrder)],
+      orderBy: (categories, { asc }) => [
+        asc(categories.sortOrder),
+        asc(categories.id), // Secondary sort by id for stable ordering
+      ],
     });
 
     return { success: true, data: categories };
