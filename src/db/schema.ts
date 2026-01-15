@@ -70,15 +70,16 @@ export const createBudgetItemSchema = z
     frequency: frequencyTypeSchema,
     startDate: z.date(),
 
-    dayOfWeek: dayOfWeekTypeSchema.optional(),
+    dayOfWeek: dayOfWeekTypeSchema.nullable().optional(),
 
-    dayOfMonth: z.number().int().min(1).max(31).optional(),
+    dayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
     dayOfMonthIsLast: z.boolean().default(false),
 
-    secondDayOfMonth: z.number().int().min(1).max(31).optional(),
-    secondDayOfMonthIsLast: z.boolean().default(false),
+    secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+    secondDayOfMonthIsLast: z.boolean().nullable().default(false),
 
-    sortOrder: z.number().optional(),
+    sortOrder: z.number(),
+    isArchived: z.boolean().default(false)
   })
   .superRefine((data, ctx) => {
     const F = frequencyTypeSchema.enum;
@@ -139,6 +140,36 @@ export const createBudgetItemSchema = z
       }
     }
   });
+
+export const budgetItemSchema = createBudgetItemSchema.extend({
+  id: z.number().int().positive(),
+  userId: z.number().int().positive(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  archivedAt: z.date().nullable(),
+});
+
+export type CreateBudgetItemType = z.infer<typeof createBudgetItemSchema>;
+export type ReadBudgetItemType = z.infer<typeof budgetItemSchema>;
+
+
+// Update Budget Category schema
+export const updateBudgetCategorySchema = z.object({
+  id: z.number().int().positive(),
+  emoji: z.string().optional(),
+  name: z.string().min(1, "Name is required").optional(),
+  sortOrder: z.number().optional(),
+  isArchived: z.boolean().optional(),
+});
+
+// Update Budget Item schema
+export const updateBudgetItemSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1, "Name is required").optional(),
+  amount: z.number().int().optional(),
+  sortOrder: z.number().optional(),
+  isArchived: z.boolean().optional(),
+});
 
 
 export const users = pgTable("users", {
