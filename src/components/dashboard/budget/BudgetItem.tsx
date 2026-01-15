@@ -11,7 +11,6 @@ function formatAmount(amount: number): string {
 
 interface BudgetItemProps {
   item: ReadBudgetItemType;
-  isEditing: boolean;
 }
 
 function getOrdinal(n: number): string {
@@ -80,7 +79,7 @@ export function DateDescription({ item }: DateDescriptionProps) {
   );
 }
 
-export function BudgetItem({ item, isEditing = false }: BudgetItemProps) {
+export function BudgetItem({ item }: BudgetItemProps) {
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
       <div className="flex items-center justify-between">

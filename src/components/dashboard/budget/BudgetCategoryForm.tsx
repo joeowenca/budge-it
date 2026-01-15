@@ -62,6 +62,17 @@ export function BudgetCategoryForm({ type, category, isAdding = false, toggleIsA
     return EmojiStyle.APPLE;
   }
 
+  const closeAddCategory = () => {
+    setIsCreating(false);
+    setNewCategoryEmoji("💵");
+    setNewCategoryName("");
+    setShowEmojiPicker(false);
+
+    if (toggleIsAdding) {
+        toggleIsAdding();
+    }
+  };
+
   const handleSubmit = async () => {
     if (!newCategoryName.trim()) {
       return;
@@ -91,17 +102,6 @@ export function BudgetCategoryForm({ type, category, isAdding = false, toggleIsA
       console.error("Error creating category:", error);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const closeAddCategory = () => {
-    setIsCreating(false);
-    setNewCategoryEmoji("💵");
-    setNewCategoryName("");
-    setShowEmojiPicker(false);
-
-    if (toggleIsAdding) {
-        toggleIsAdding();
     }
   };
 

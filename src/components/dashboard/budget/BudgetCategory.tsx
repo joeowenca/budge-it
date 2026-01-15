@@ -443,7 +443,6 @@ export function BudgetCategory({
                   <BudgetItem
                     key={item.id}
                     item={item}
-                    isEditing={isEditing}
                   />
                 );
               })}

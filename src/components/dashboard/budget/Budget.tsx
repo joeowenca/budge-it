@@ -22,7 +22,7 @@ export default async function Budget() {
   const savingsItems = savingsItemsRes.data || [];
 
   // 3. Now .reduce will work because incomeItems is guaranteed to be an array
-  const incomeItemsByCategory = incomeItems.reduce(
+  const incomeItemsByCategoryId = incomeItems.reduce(
     (acc: any, item: any) => {
       // Note: You might need to update "item.categoryId" to match your DB schema 
       // (Your schema seems to use "budgetCategoryId" based on previous files)
@@ -37,7 +37,7 @@ export default async function Budget() {
     {} as Record<number, typeof incomeItems>
   );
 
-  const expenseItemsByCategory = expenseItems.reduce(
+  const expenseItemsByCategoryId = expenseItems.reduce(
     (acc: any, item: any) => {
       const catId = item.budgetCategoryId;
       if (!acc[catId]) {
@@ -49,7 +49,7 @@ export default async function Budget() {
     {} as Record<number, typeof expenseItems>
   );
 
-  const savingsItemsByCategory = savingsItems.reduce(
+  const savingsItemsByCategoryId = savingsItems.reduce(
     (acc: any, item: any) => {
       const catId = item.budgetCategoryId;
       if (!acc[catId]) {
@@ -64,17 +64,17 @@ export default async function Budget() {
   // Combine categories with their items
   const incomeCategoriesWithBudgetItems = incomeCategories.map((category: any) => ({
     ...category,
-    budgetItems: incomeItemsByCategory[category.id] || [],
+    budgetItems: incomeItemsByCategoryId[category.id] || [],
   }));
 
   const expenseCategoriesWithBudgetItems = expenseCategories.map((category: any) => ({
     ...category,
-    budgetItems: expenseItemsByCategory[category.id] || [],
+    budgetItems: expenseItemsByCategoryId[category.id] || [],
   }));
 
   const savingsCategoriesWithBudgetItems = savingsCategories.map((category: any) => ({
     ...category,
-    budgetItems: savingsItemsByCategory[category.id] || [],
+    budgetItems: savingsItemsByCategoryId[category.id] || [],
   }));
 
   return (
