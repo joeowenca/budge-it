@@ -14,21 +14,7 @@ interface BudgetSectionProps {
 }
 
 export default function BudgetSection({ title, categories, budgetType }: BudgetSectionProps) {
-  // Track expanded state for each category (default: all collapsed)
-  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
-
-  const toggleCategory = (categoryId: number) => {
-    setExpandedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(categoryId)) {
-        next.delete(categoryId);
-      } else {
-        next.add(categoryId);
-      }
-      return next;
-    });
-  };
 
   const toggleIsAdding = () => {
     setIsAdding(!isAdding);
@@ -52,7 +38,6 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
           categories
             .filter((category) => !category.isArchived)
             .map((category) => {
-              const isExpanded = expandedCategories.has(category.id);
               // Map schema category (with 'name') to BudgetCategory expected format (with 'label')
               const categoryForDisplay = {
                 id: category.id,
@@ -67,8 +52,6 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
                   category={categoryForDisplay}
                   items={category.budgetItems}
                   title={title}
-                  isExpanded={isExpanded}
-                  onToggle={() => toggleCategory(category.id)}
                 />
               );
             })

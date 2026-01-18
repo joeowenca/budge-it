@@ -34,8 +34,6 @@ interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
-  isExpanded: boolean;
-  onToggle: () => void;
 }
 
 function formatAmount(amount: number): string {
@@ -70,8 +68,6 @@ export function BudgetCategory({
   category,
   items,
   title,
-  isExpanded,
-  onToggle,
 }: BudgetCategoryProps) {
   const router = useRouter();
   // Stable sort: sort by sortOrder (ascending) first, then by id (ascending) as tie-breaker
@@ -107,6 +103,7 @@ export function BudgetCategory({
     isArchived: false,
     sortOrder: 0,
   });
+  const [isExpanded, setIsExpanded] = useState(activeItems.length === 0);
 
   function getActiveItems(): ReadBudgetItemType[] {
     return items.filter((item) => !item.isArchived).sort((a, b) => {
@@ -333,7 +330,7 @@ export function BudgetCategory({
 
   function toggleIsExpanded() {
     if (!isEditing) {
-      onToggle();
+      setIsExpanded(!isExpanded);
     }
   }
 
