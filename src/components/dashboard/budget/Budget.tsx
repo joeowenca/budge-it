@@ -2,6 +2,13 @@ import BudgetSection from "./BudgetSection";
 import { AddToBudgetDialogButton } from "./AddToBudgetDialogButton";
 import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
 
+type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
+type BudgetItem = NonNullable<Awaited<ReturnType<typeof getBudgetItems>>["data"]>[number];
+
+export interface CategoryWithBudgetItems extends Category {
+  budgetItems: BudgetItem[];
+}
+
 export default async function Budget() {
   // 1. Fetch the raw responses (which are objects: { success, data, error })
   const incomeCategoriesRes = await getBudgetCategories({ type: "income" });

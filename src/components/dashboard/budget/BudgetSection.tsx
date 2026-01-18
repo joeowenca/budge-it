@@ -1,18 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
+import { CategoryWithBudgetItems } from "./Budget";
 import { BudgetCategory } from "./BudgetCategory";
 import type { BudgetType } from "@/db/schema";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
 import { Plus } from "lucide-react";
-
-type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
-type BudgetItem = NonNullable<Awaited<ReturnType<typeof getBudgetItems>>["data"]>[number];
-
-interface CategoryWithBudgetItems extends Category {
-  budgetItems: BudgetItem[];
-}
 
 interface BudgetSectionProps {
   title: string;
