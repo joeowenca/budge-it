@@ -12,7 +12,7 @@ import EmojiPicker, { EmojiClickData, EmojiStyle, Categories } from "emoji-picke
 import { BudgetType } from "@/db/schema";
 
 type BudgetCategoryFormTypes = {
-    type?: BudgetType;
+    budgetType?: BudgetType;
     category?: Category;
     isAdding?: boolean;
     toggleIsAdding?: () => void;
@@ -21,7 +21,7 @@ type BudgetCategoryFormTypes = {
     onNameChange?: (name: string) => void;
 }
 
-export function BudgetCategoryForm({ type, category, isAdding = false, toggleIsAdding, isEditing = false, onEmojiChange, onNameChange }: BudgetCategoryFormTypes) {
+export function BudgetCategoryForm({ budgetType, category, isAdding = false, toggleIsAdding, isEditing = false, onEmojiChange, onNameChange }: BudgetCategoryFormTypes) {
     const router = useRouter();
 
     const [isCreating, setIsCreating] = useState(false);
@@ -81,9 +81,9 @@ export function BudgetCategoryForm({ type, category, isAdding = false, toggleIsA
     setIsSubmitting(true);
 
     try {
-      if (type) {
+      if (budgetType) {
         const result = await createBudgetCategory({
-            type,
+            type: budgetType,
             name: newCategoryName.trim(),
             emoji: newCategoryEmoji,
         });

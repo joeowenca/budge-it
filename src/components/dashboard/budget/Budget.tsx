@@ -96,9 +96,9 @@ export default async function Budget() {
       <div className="flex-1 min-h-0">
         <div className="h-full lg:overflow-y-auto px-5 pb-5">
           <div className="space-y-6">
-            <BudgetSection title="Income" categories={incomeCategoriesWithBudgetItems} type="income" />
-            <BudgetSection title="Expenses" categories={expenseCategoriesWithBudgetItems} type="expense" />
-            <BudgetSection title="Savings" categories={savingsCategoriesWithBudgetItems} type="savings" />
+            <BudgetSection title="Income" categories={incomeCategoriesWithBudgetItems} budgetType="income" />
+            <BudgetSection title="Expenses" categories={expenseCategoriesWithBudgetItems} budgetType="expense" />
+            <BudgetSection title="Savings" categories={savingsCategoriesWithBudgetItems} budgetType="savings" />
           </div>
         </div>
       </div>

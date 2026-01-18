@@ -10,10 +10,10 @@ import { Plus } from "lucide-react";
 interface BudgetSectionProps {
   title: string;
   categories: CategoryWithBudgetItems[];
-  type: BudgetType;
+  budgetType: BudgetType;
 }
 
-export default function BudgetSection({ title, categories, type }: BudgetSectionProps) {
+export default function BudgetSection({ title, categories, budgetType }: BudgetSectionProps) {
   // Track expanded state for each category (default: all collapsed)
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
@@ -74,7 +74,7 @@ export default function BudgetSection({ title, categories, type }: BudgetSection
             })
         )}
       </div>
-      <BudgetCategoryForm type={type} isAdding={isAdding} toggleIsAdding={(toggleIsAdding)} />
+      <BudgetCategoryForm budgetType={budgetType} isAdding={isAdding} toggleIsAdding={(toggleIsAdding)} />
     </div>
   );
 }
