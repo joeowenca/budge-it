@@ -108,22 +108,7 @@ export function BudgetCategory({
   const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
-  const [newItem, setNewItem] = useState<CreateItemDraft>({
-    tempId: tempIdCounter--,
-    budgetCategoryId: category.id,
-    type: category.type,
-    name: "",
-    amount: "",
-    frequency: "monthly",
-    dayOfWeek: null,
-    dayOfMonth: 1,
-    dayOfMonthIsLast: false,
-    secondDayOfMonth: null,
-    secondDayOfMonthIsLast: false,
-    startDate: new Date(),
-    isArchived: false,
-    sortOrder: 0,
-  });
+  const [newItem, setNewItem] = useState<CreateItemDraft>(defaultItem);
 
   function totalNumberOfItems(): number {
     return itemsInDB.length + newItems.length;
@@ -134,22 +119,7 @@ export function BudgetCategory({
   }, 0);
 
   const resetNewItem = () => {
-    setNewItem({
-      tempId: tempIdCounter--,
-      budgetCategoryId: category.id,
-      type: category.type,
-      name: "",
-      amount: "",
-      frequency: "monthly",
-      dayOfWeek: null,
-      dayOfMonth: 1,
-      dayOfMonthIsLast: false,
-      secondDayOfMonth: null,
-      secondDayOfMonthIsLast: false,
-      startDate: new Date(),
-      isArchived: false,
-      sortOrder: 0,
-    });
+    setNewItem(defaultItem);
   }
 
   const resetEditState = () => {
