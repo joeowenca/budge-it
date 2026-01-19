@@ -1,55 +1,11 @@
 import { ReadBudgetItemType } from "@/db/schema";
-import { Calendar } from "lucide-react";
 import { AmountPill } from "@/components/AmountPill";
-import { getOrdinal, getLastDayOfMonth, convertAmountToCurrency } from "@/lib/utils";
+import { convertAmountToCurrency } from "@/lib/utils";
+
+import { DateDescription } from "./DateDescription";
 
 interface BudgetItemProps {
   item: ReadBudgetItemType;
-}
-
-function capitalizeFirstLetter(str: string): string {
-  if (!str) return "";
-
-  const trimmed = str.slice(0, 3);
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-}
-
-type DateDescriptionProps = {
-  item: ReadBudgetItemType;
-}
-
-export function DateDescription({ item }: DateDescriptionProps) {
-  return (
-    <div className="flex text-xs font-semibold tracking-wide text-muted-foreground">
-      <Calendar className="size-3.5 mt-0.25 mr-1" />
-      {item.frequency === "weekly" && item.dayOfWeek && (
-        <>
-          {capitalizeFirstLetter(item.dayOfWeek)}
-        </>
-      )}
-
-      {item.frequency === "bi-weekly" && item.dayOfWeek && (
-        <>
-          Second {capitalizeFirstLetter(item.dayOfWeek)}
-        </>
-      )}
-
-      {item.frequency === "semi-monthly" && item.dayOfMonth && (
-        <>
-          {getOrdinal(item.dayOfMonth)} &
-          {item.secondDayOfMonthIsLast
-            ? ` ${getLastDayOfMonth(new Date())}`
-            : item.secondDayOfMonth
-            ? <> {getOrdinal(item.secondDayOfMonth)}</>
-            : ""}
-        </>
-      )}
-
-      {item.frequency === "monthly" && item.dayOfMonth && (
-        <>{getOrdinal(item.dayOfMonth)}</>
-      )}
-    </div>
-  );
 }
 
 export function BudgetItem({ item }: BudgetItemProps) {
