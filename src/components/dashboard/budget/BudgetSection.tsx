@@ -1,41 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
+import { CategoryWithBudgetItems } from "./Budget";
 import { BudgetCategory } from "./BudgetCategory";
 import type { BudgetType } from "@/db/schema";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
 import { Plus } from "lucide-react";
 
-type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
-type BudgetItem = NonNullable<Awaited<ReturnType<typeof getBudgetItems>>["data"]>[number];
-
-interface CategoryWithBudgetItems extends Category {
-  budgetItems: BudgetItem[];
-}
-
 interface BudgetSectionProps {
   title: string;
   categories: CategoryWithBudgetItems[];
-  type: BudgetType;
+  budgetType: BudgetType;
 }
 
-export default function BudgetSection({ title, categories, type }: BudgetSectionProps) {
-  // Track expanded state for each category (default: all collapsed)
-  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+export default function BudgetSection({ title, categories, budgetType }: BudgetSectionProps) {
   const [isAdding, setIsAdding] = useState(false);
-
-  const toggleCategory = (categoryId: number) => {
-    setExpandedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(categoryId)) {
-        next.delete(categoryId);
-      } else {
-        next.add(categoryId);
-      }
-      return next;
-    });
-  };
 
   const toggleIsAdding = () => {
     setIsAdding(!isAdding);
@@ -59,7 +38,6 @@ export default function BudgetSection({ title, categories, type }: BudgetSection
           categories
             .filter((category) => !category.isArchived)
             .map((category) => {
-              const isExpanded = expandedCategories.has(category.id);
               // Map schema category (with 'name') to BudgetCategory expected format (with 'label')
               const categoryForDisplay = {
                 id: category.id,
@@ -74,14 +52,12 @@ export default function BudgetSection({ title, categories, type }: BudgetSection
                   category={categoryForDisplay}
                   items={category.budgetItems}
                   title={title}
-                  isExpanded={isExpanded}
-                  onToggle={() => toggleCategory(category.id)}
                 />
               );
             })
         )}
       </div>
-      <BudgetCategoryForm type={type} isAdding={isAdding} toggleIsAdding={(toggleIsAdding)} />
+      {isAdding && (<BudgetCategoryForm budgetType={budgetType} action="add" onClose={(toggleIsAdding)} />)}
     </div>
   );
 }

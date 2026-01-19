@@ -1,82 +1,11 @@
 import { ReadBudgetItemType } from "@/db/schema";
-import { Calendar } from "lucide-react";
+import { AmountPill } from "@/components/AmountPill";
+import { convertAmountToCurrency } from "@/lib/utils";
 
-function formatAmount(amount: number): string {
-  // Amount is stored in cents, convert to dollars
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount / 100);
-}
+import { DateDescription } from "./DateDescription";
 
 interface BudgetItemProps {
   item: ReadBudgetItemType;
-}
-
-function getOrdinal(n: number): string {
-  if (n < 1 || n > 31) return String(n); // just in case
-  if (n >= 11 && n <= 13) return n + "th"; // special case for teens
-  const lastDigit = n % 10;
-  switch (lastDigit) {
-    case 1:
-      return n + "st";
-    case 2:
-      return n + "nd";
-    case 3:
-      return n + "rd";
-    default:
-      return n + "th";
-  }
-}
-
-function capitalizeFirstLetter(str: string): string {
-  if (!str) return "";
-
-  const trimmed = str.slice(0, 3);
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-}
-
-function getLastDayOfCurrentMonth(): number {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-}
-
-type DateDescriptionProps = {
-  item: ReadBudgetItemType;
-}
-
-export function DateDescription({ item }: DateDescriptionProps) {
-  return (
-    <div className="flex text-xs font-semibold tracking-wide text-muted-foreground">
-      <Calendar className="size-3.5 mt-0.25 mr-1" />
-      {item.frequency === "weekly" && item.dayOfWeek && (
-        <>
-          {capitalizeFirstLetter(item.dayOfWeek)}
-        </>
-      )}
-
-      {item.frequency === "bi-weekly" && item.dayOfWeek && (
-        <>
-          Second {capitalizeFirstLetter(item.dayOfWeek)}
-        </>
-      )}
-
-      {item.frequency === "semi-monthly" && item.dayOfMonth && (
-        <>
-          {getOrdinal(item.dayOfMonth)} &
-          {item.secondDayOfMonthIsLast
-            ? ` ${getLastDayOfCurrentMonth()}`
-            : item.secondDayOfMonth
-            ? <> {getOrdinal(item.secondDayOfMonth)}</>
-            : ""}
-        </>
-      )}
-
-      {item.frequency === "monthly" && item.dayOfMonth && (
-        <>{getOrdinal(item.dayOfMonth)}</>
-      )}
-    </div>
-  );
 }
 
 export function BudgetItem({ item }: BudgetItemProps) {
@@ -90,13 +19,11 @@ export function BudgetItem({ item }: BudgetItemProps) {
           <DateDescription item={item} />
         </div>
         <span className="text-xs text-muted-foreground tracking-[0.2em] ml-4 mr-1">
-            {item.frequency === "weekly" && "4x"}
-            {item.frequency === "bi-weekly" && "2x"}
-            {item.frequency === "semi-monthly" && "2x"}
-          </span>
-        <div className="font-medium px-2.5 py-1 text-yellow-800 bg-yellow-500/15 rounded-full tracking-wider">
-          {formatAmount(item.amount)}
-        </div>
+          {item.frequency === "weekly" && "4x"}
+          {item.frequency === "bi-weekly" && "2x"}
+          {item.frequency === "semi-monthly" && "2x"}
+        </span>
+        <AmountPill amount={convertAmountToCurrency(item.amount)} color="yellow" />
       </div>
     </div>
   );

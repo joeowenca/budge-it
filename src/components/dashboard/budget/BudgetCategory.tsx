@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
+import { AmountPill, AmountPillColorTypes } from "@/components/AmountPill";
 import { batchUpdateBudgetItems, batchCreateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
 import { budgetTypeSchema, ReadBudgetItemType, CreateBudgetItemType } from "@/db/schema";
 import { z } from "zod";
@@ -17,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
+import { convertAmountToCurrency, getFrequencyMultiplier } from "@/lib/utils";
 
 export type Category = {
   id: number;
@@ -25,57 +27,30 @@ export type Category = {
   type: z.infer<typeof budgetTypeSchema>;
 };
 
+export type CategoryEditValueTypes = {
+  emoji: string;
+  name: string;
+}
+
 export type CreateItemDraft = Omit<CreateBudgetItemType, "amount"> & { amount: string, tempId: number };
 export type UpdateItemDraft = Omit<ReadBudgetItemType, "amount"> & { amount: string };
-
-let tempIdCounter = -1;
 
 interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
-  isExpanded: boolean;
-  onToggle: () => void;
 }
 
-function formatAmount(amount: number): string {
-  // Amount is stored in cents, convert to dollars
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount / 100);
-}
-
-interface TotalAmountProps {
-  totalAmount: string;
-  title?: string;
-  isExpanded?: boolean;
-}
-
-const titleColors: Record<string, string> = {
-  Income: "text-primary bg-primary/10",
-  Expenses: "text-red-600 bg-red-600/10",
-  Savings: "text-green-700 bg-green-600/10",
-};
-
-function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
-  return (
-    <span className={`font-medium text-sm tracking-wider ml-4 px-2.5 py-1 ${titleColors[title ?? ""] || "text-gray-900 bg-gray-600/10"} ${isExpanded && "invisible"} rounded-full`}>
-      {totalAmount}
-    </span>
-  );
-}
+let tempIdCounter = -1;
 
 export function BudgetCategory({
   category,
   items,
   title,
-  isExpanded,
-  onToggle,
 }: BudgetCategoryProps) {
   const router = useRouter();
   // Stable sort: sort by sortOrder (ascending) first, then by id (ascending) as tie-breaker
-  const activeItems = items
+  const itemsInDB = items
     .filter((item) => !item.isArchived)
     .sort((a, b) => {
       const sortOrderA = a.sortOrder ?? 0;
@@ -85,13 +60,8 @@ export function BudgetCategory({
       }
       return a.id - b.id;
     });
-  const [isEditing, setIsEditing] = useState(getActiveItems().length === 0);
-  const [editValues, setEditValues] = useState<Record<number, UpdateItemDraft>>({});
-  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
-  const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
-  const [editCategoryEmoji, setEditCategoryEmoji] = useState(category.emoji);
-  const [editCategoryName, setEditCategoryName] = useState(category.name);
-  const [newItem, setNewItem] = useState<CreateItemDraft>({
+
+  const defaultItem: CreateItemDraft = {
     tempId: tempIdCounter--,
     budgetCategoryId: category.id,
     type: category.type,
@@ -106,88 +76,85 @@ export function BudgetCategory({
     startDate: new Date(),
     isArchived: false,
     sortOrder: 0,
-  });
+  }
 
-  function getActiveItems(): ReadBudgetItemType[] {
-    return items.filter((item) => !item.isArchived).sort((a, b) => {
-      const sortOrderA = a.sortOrder ?? 0;
-      const sortOrderB = b.sortOrder ?? 0;
-      if (sortOrderA !== sortOrderB) {
-        return sortOrderA - sortOrderB;
+  const originalCategoryValues: CategoryEditValueTypes = {
+    emoji: category.emoji,
+    name: category.name
+  }
+
+  const titleColors: Record<string, AmountPillColorTypes> = {
+    Income: "blue",
+    Expenses: "red",
+    Savings: "green"
+  }
+
+  const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
+  const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
+  const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
+  const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
+  const [newItem, setNewItem] = useState<CreateItemDraft>(defaultItem);
+
+  function totalNumberOfItems(): number {
+    return itemsInDB.length + newItems.length;
+  }
+
+  const totalAmount = [
+    ...itemsInDB,
+    ...newItems
+  ].reduce((sum, item) => {
+    let amountInCents = 0;
+
+    if ("amount" in item) {
+      if (typeof item.amount === "string") {
+        // New items: string like "10.00" → convert to cents
+        amountInCents = Math.round(Number(item.amount) * 100);
+      } else {
+        // DB items: already in cents
+        amountInCents = item.amount;
       }
-      return a.id - b.id;
-    });
-  }
-
-  function getTotalItemsLength(): number {
-    return activeItems.length + newItems.length;
-  }
-
-  const getFrequencyMultiplier = (item: ReadBudgetItemType) => {
-    switch (item.frequency) {
-      case "weekly":
-        return 4;
-      case "bi-weekly":
-        return 2;
-      case "semi-monthly":
-        return 2;
-      case "monthly":
-        return 1;
-      default:
-        return 1;
     }
-  };
 
-  const totalAmount = activeItems.reduce((sum, item) => {
-    return sum + item.amount * getFrequencyMultiplier(item);
+    return sum + amountInCents * getFrequencyMultiplier(item.frequency);
   }, 0);
 
   const resetNewItem = () => {
-    setNewItem({
-      tempId: tempIdCounter--,
-      budgetCategoryId: category.id,
-      type: category.type,
-      name: "",
-      amount: "",
-      frequency: "monthly",
-      dayOfWeek: null,
-      dayOfMonth: 1,
-      dayOfMonthIsLast: false,
-      secondDayOfMonth: null,
-      secondDayOfMonthIsLast: false,
-      startDate: new Date(),
-      isArchived: false,
-      sortOrder: 0,
-    });
+    setNewItem(defaultItem);
   }
 
   const resetEditState = () => {
-    setEditValues({});
+    setItemEditValues({});
     setNewItems([]);
     resetNewItem();
     setIsEditing(false);
     // Restore original category values
-    setEditCategoryEmoji(category.emoji);
-    setEditCategoryName(category.name);
+    setCategoryEditValues({
+      emoji: category.emoji,
+      name: category.name
+    });
   }
 
   const toggleIsEditing = () => {
-    if (getTotalItemsLength() === 0) return;
+    if (totalNumberOfItems() === 0) return;
 
     if (!isEditing) {
       // ENTERING Edit Mode: Initialize values immediately
       // Convert amount from cents (number) to dollars (string), preserving 2 decimal places
       const initialValues: Record<number, UpdateItemDraft> = {};
-      activeItems.forEach((item) => {
+      itemsInDB.forEach((item) => {
         initialValues[item.id] = {
           ...item,
           amount: (item.amount / 100).toFixed(2),
         };
       });
-      setEditValues(initialValues);
+      setItemEditValues(initialValues);
       // Initialize category edit values with current category values
-      setEditCategoryEmoji(category.emoji);
-      setEditCategoryName(category.name);
+      setCategoryEditValues({
+        emoji: category.emoji,
+        name: category.name
+      });
       setIsEditing(true);
 
       return;
@@ -198,12 +165,12 @@ export function BudgetCategory({
   };
 
   const handleSave = async () => {
-    // Construct array of updates from editValues
+    // Construct array of updates from itemEditValues
     // Convert amount from dollars (string) back to cents (number)
 
-    if (getTotalItemsLength() === 0) return;
+    if (totalNumberOfItems() === 0) return;
 
-    const updates = Object.values(editValues).map((item) => {
+    const updates = Object.values(itemEditValues).map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
       return {
         id: item.id,
@@ -234,12 +201,16 @@ export function BudgetCategory({
     });
 
     // Update category if emoji or name changed
-    const categoryUpdate = 
-      editCategoryEmoji !== category.emoji || editCategoryName !== category.name
-        ? updateBudgetCategory({
+    const categoryHasChanged =
+      originalCategoryValues.emoji !== categoryEditValues.emoji ||
+      originalCategoryValues.name !== categoryEditValues.name;
+
+    const categoryUpdate =
+      categoryHasChanged
+      ? updateBudgetCategory({
             id: category.id,
-            emoji: editCategoryEmoji,
-            name: editCategoryName,
+            emoji: categoryEditValues.emoji,
+            name: categoryEditValues.name,
           })
         : Promise.resolve({ success: true, data: [] });
 
@@ -266,32 +237,32 @@ export function BudgetCategory({
     }
   };
 
-  const handleNameChange = (itemId: number, value: string) => {
-    setEditValues((prev) => ({
+  const handleItemNameChange = (itemId: number, value: string) => {
+    setItemEditValues((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], name: value },
     }));
   };
 
-  const handleAmountChange = (itemId: number, value: string) => {
+  const handleItemAmountChange = (itemId: number, value: string) => {
     // Allow empty string, numbers, and decimals (including trailing dots)
     // Prevent letters and symbols other than dots
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setEditValues((prev) => ({
+      setItemEditValues((prev) => ({
         ...prev,
         [itemId]: { ...prev[itemId], amount: value },
       }));
     }
   };
 
-  const handleArchive = (itemId: number) => {
-    setEditValues((prev) => ({
+  const handleItemArchive = (itemId: number) => {
+    setItemEditValues((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], isArchived: true },
     }));
   };
 
-  const handleAdd = () => {
+  const handleCreateNewItem = () => {
     if (!newItem.name || !newItem.amount) {
       return;
     }
@@ -324,7 +295,6 @@ export function BudgetCategory({
 
     if (result.success) {
       setShowArchiveDialog(false);
-      setIsEditing(false);
       router.refresh();
     } else {
       console.error("Failed to archive category:", result.error);
@@ -333,7 +303,7 @@ export function BudgetCategory({
 
   function toggleIsExpanded() {
     if (!isEditing) {
-      onToggle();
+      setIsExpanded(!isExpanded);
     }
   }
 
@@ -342,7 +312,7 @@ export function BudgetCategory({
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0">
         <div 
-          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(getTotalItemsLength() === 0 || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
+          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${isEditing ? "cursor-default" : "cursor-pointer"} select-none`}
           onClick={toggleIsExpanded}
         >
           
@@ -351,12 +321,12 @@ export function BudgetCategory({
               <BudgetCategoryForm 
                 category={{
                   ...category,
-                  emoji: editCategoryEmoji,
-                  name: editCategoryName,
+                  emoji: categoryEditValues.emoji,
+                  name: categoryEditValues.name,
                 }}
-                isEditing={true}
-                onEmojiChange={setEditCategoryEmoji}
-                onNameChange={setEditCategoryName}
+                action="edit"
+                onChange={setCategoryEditValues}
+                onClose={() => null}
               />
               <div 
               className="text-sm text-red-600 p-1.25 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
@@ -376,13 +346,13 @@ export function BudgetCategory({
           )}
         </div>
         <div className="flex items-center gap-2 relative">
-          {(isExpanded || getActiveItems().length === 0) && !isEditing && (
+          {isExpanded && !isEditing && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleIsEditing();
               }}
-              className={`p-1.5 bg-muted rounded-full transition-all ${activeItems.length === 0 ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
+              className={`p-1.5 bg-muted rounded-full transition-all ${itemsInDB.length === 0 ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
               aria-label="Edit category"
             >
               <Pencil className="size-4.5" strokeWidth={2} />
@@ -395,7 +365,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${activeItems.length === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${itemsInDB.length === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
                 aria-label="Cancel editing"
               >
                 <Undo className="size-4.5" strokeWidth={2.5} />
@@ -405,14 +375,14 @@ export function BudgetCategory({
                   e.stopPropagation();
                   handleSave();
                 }}
-                className={`p-1.25 bg-muted rounded-full transition-all ${getTotalItemsLength() === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
+                className={`p-1.25 bg-muted rounded-full transition-all ${totalNumberOfItems() === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
                 aria-label="Save changes"
               >
                 <CheckIcon className="size-4.5" strokeWidth={3} />
               </button>
             </div>
           )}
-          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
+          <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} className={`${isExpanded && "invisible"}`} />
         </div>
       </div>
 
@@ -421,9 +391,9 @@ export function BudgetCategory({
         <>
           {(isExpanded || isEditing) && (
             <div className={`space-y-1 ${isEditing ? "mt-1" : "mt-3"}`}>
-              {activeItems.map((item) => {
+              {itemsInDB.map((item) => {
                 if (isEditing) {
-                  const editItem = editValues[item.id];
+                  const editItem = itemEditValues[item.id];
                   // Skip archived items in edit mode
                   if (!editItem || editItem.isArchived) {
                     return null;
@@ -433,9 +403,9 @@ export function BudgetCategory({
                       key={item.id}
                       action="edit"
                       budgetItem={editItem}
-                      onNameChange={(value) => handleNameChange(item.id, value)}
-                      onAmountChange={(value) => handleAmountChange(item.id, value)}
-                      onArchive={() => handleArchive(item.id)}
+                      onNameChange={(value) => handleItemNameChange(item.id, value)}
+                      onAmountChange={(value) => handleItemAmountChange(item.id, value)}
+                      onArchive={() => handleItemArchive(item.id)}
                     />
                   );
                 }
@@ -477,12 +447,12 @@ export function BudgetCategory({
                   onNameChange={handleNewItemNameChange}
                   onAmountChange={handleNewItemAmountChange}
                   type={category.type}
-                  onAdd={handleAdd}
+                  onAdd={handleCreateNewItem}
                 />
               )}
             </div>
           )}
-          {activeItems.length === 0 && isEditing && newItems.length === 0 && (
+          {itemsInDB.length === 0 && isEditing && newItems.length === 0 && (
             <div className="space-y-1 mt-1">
               <BudgetItemForm
                 action="add"
@@ -490,7 +460,7 @@ export function BudgetCategory({
                 onNameChange={handleNewItemNameChange}
                 onAmountChange={handleNewItemAmountChange}
                 type={category.type}
-                onAdd={handleAdd}
+                onAdd={handleCreateNewItem}
               />
             </div>
           )}
@@ -499,7 +469,7 @@ export function BudgetCategory({
           <div className="pt-1">
             <div className="flex items-center justify-between mt-1">
               <span className="font-medium">Monthly total</span>
-              <TotalAmount title={title} totalAmount={formatAmount(totalAmount)} />
+              <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} />
             </div>
           </div>
         </>
@@ -516,7 +486,7 @@ export function BudgetCategory({
             </div>
             <DialogTitle className="text-center text-xl">Are you sure?</DialogTitle>
             <DialogDescription className="text-center text-md mb-1">
-              Archiving <b>{editCategoryName}</b> will
+              Archiving <b>{categoryEditValues.name}</b> will
               <br />
               archive all its <b>{category.type}{category.type.toString() === "expense" && "s"}</b>
             </DialogDescription>
@@ -540,4 +510,3 @@ export function BudgetCategory({
     </div>
   );
 }
-

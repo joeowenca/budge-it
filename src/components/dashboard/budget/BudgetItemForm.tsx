@@ -9,11 +9,10 @@ import { z } from "zod";
 interface BudgetItemFormProps {
   action: "edit" | "add";
   budgetItem: UpdateItemDraft | CreateItemDraft;
-  onNameChange?: (value: string) => void;
-  onAmountChange?: (value: string) => void;
+  onNameChange: (value: string) => void;
+  onAmountChange: (value: string) => void;
   onArchive?: () => void;
-  // For "add" mode
-  type?: z.infer<typeof budgetTypeSchema>;
+  type?: z.infer<typeof budgetTypeSchema>; // For "add" mode
   onAdd?: () => void;
 }
 
