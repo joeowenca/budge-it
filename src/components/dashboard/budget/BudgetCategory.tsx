@@ -69,7 +69,7 @@ export function BudgetCategory({
 }: BudgetCategoryProps) {
   const router = useRouter();
   // Stable sort: sort by sortOrder (ascending) first, then by id (ascending) as tie-breaker
-  const activeItems = items
+  const itemsInDB = items
     .filter((item) => !item.isArchived)
     .sort((a, b) => {
       const sortOrderA = a.sortOrder ?? 0;
@@ -102,8 +102,8 @@ export function BudgetCategory({
     name: category.name
   }
 
-  const [isExpanded, setIsExpanded] = useState(activeItems.length === 0);
-  const [isEditing, setIsEditing] = useState(getActiveItems().length === 0);
+  const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
+  const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
   const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
   const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
@@ -125,22 +125,11 @@ export function BudgetCategory({
     sortOrder: 0,
   });
 
-  function getActiveItems(): ReadBudgetItemType[] {
-    return items.filter((item) => !item.isArchived).sort((a, b) => {
-      const sortOrderA = a.sortOrder ?? 0;
-      const sortOrderB = b.sortOrder ?? 0;
-      if (sortOrderA !== sortOrderB) {
-        return sortOrderA - sortOrderB;
-      }
-      return a.id - b.id;
-    });
+  function totalNumberOfItems(): number {
+    return itemsInDB.length + newItems.length;
   }
 
-  function getTotalItemsLength(): number {
-    return activeItems.length + newItems.length;
-  }
-
-  const totalAmount = activeItems.reduce((sum, item) => {
+  const totalAmount = itemsInDB.reduce((sum, item) => {
     return sum + item.amount * getFrequencyMultiplier(item);
   }, 0);
 
@@ -176,13 +165,13 @@ export function BudgetCategory({
   }
 
   const toggleIsEditing = () => {
-    if (getTotalItemsLength() === 0) return;
+    if (totalNumberOfItems() === 0) return;
 
     if (!isEditing) {
       // ENTERING Edit Mode: Initialize values immediately
       // Convert amount from cents (number) to dollars (string), preserving 2 decimal places
       const initialValues: Record<number, UpdateItemDraft> = {};
-      activeItems.forEach((item) => {
+      itemsInDB.forEach((item) => {
         initialValues[item.id] = {
           ...item,
           amount: (item.amount / 100).toFixed(2),
@@ -207,7 +196,7 @@ export function BudgetCategory({
     // Construct array of updates from itemEditValues
     // Convert amount from dollars (string) back to cents (number)
 
-    if (getTotalItemsLength() === 0) return;
+    if (totalNumberOfItems() === 0) return;
 
     const updates = Object.values(itemEditValues).map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
@@ -352,7 +341,7 @@ export function BudgetCategory({
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0">
         <div 
-          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(getTotalItemsLength() === 0 || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
+          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(totalNumberOfItems() === 0 || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
           onClick={toggleIsExpanded}
         >
           
@@ -385,13 +374,13 @@ export function BudgetCategory({
           )}
         </div>
         <div className="flex items-center gap-2 relative">
-          {(isExpanded || getActiveItems().length === 0) && !isEditing && (
+          {(isExpanded || itemsInDB.length === 0) && !isEditing && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleIsEditing();
               }}
-              className={`p-1.5 bg-muted rounded-full transition-all ${activeItems.length === 0 ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
+              className={`p-1.5 bg-muted rounded-full transition-all ${itemsInDB.length === 0 ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
               aria-label="Edit category"
             >
               <Pencil className="size-4.5" strokeWidth={2} />
@@ -404,7 +393,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${activeItems.length === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${itemsInDB.length === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
                 aria-label="Cancel editing"
               >
                 <Undo className="size-4.5" strokeWidth={2.5} />
@@ -414,7 +403,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   handleSave();
                 }}
-                className={`p-1.25 bg-muted rounded-full transition-all ${getTotalItemsLength() === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
+                className={`p-1.25 bg-muted rounded-full transition-all ${totalNumberOfItems() === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
                 aria-label="Save changes"
               >
                 <CheckIcon className="size-4.5" strokeWidth={3} />
@@ -430,7 +419,7 @@ export function BudgetCategory({
         <>
           {(isExpanded || isEditing) && (
             <div className={`space-y-1 ${isEditing ? "mt-1" : "mt-3"}`}>
-              {activeItems.map((item) => {
+              {itemsInDB.map((item) => {
                 if (isEditing) {
                   const editItem = itemEditValues[item.id];
                   // Skip archived items in edit mode
@@ -491,7 +480,7 @@ export function BudgetCategory({
               )}
             </div>
           )}
-          {activeItems.length === 0 && isEditing && newItems.length === 0 && (
+          {itemsInDB.length === 0 && isEditing && newItems.length === 0 && (
             <div className="space-y-1 mt-1">
               <BudgetItemForm
                 action="add"
