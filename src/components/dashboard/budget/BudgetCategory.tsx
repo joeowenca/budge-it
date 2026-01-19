@@ -467,7 +467,7 @@ export function BudgetCategory({
 
           {/* Total at bottom - Tally sheet style */}
           <div className="pt-1">
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between">
               <span className="font-medium">Monthly total</span>
               <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} />
             </div>
