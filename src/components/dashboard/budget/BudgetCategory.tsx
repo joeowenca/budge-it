@@ -341,7 +341,7 @@ export function BudgetCategory({
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0">
         <div 
-          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${(totalNumberOfItems() === 0 || isEditing) ? "cursor-default" : "cursor-pointer"} select-none`}
+          className={`flex items-center gap-2 pr-2 transition-all ${!isEditing && "hover:text-primary"} ${isEditing ? "cursor-default" : "cursor-pointer"} select-none`}
           onClick={toggleIsExpanded}
         >
           
@@ -374,7 +374,7 @@ export function BudgetCategory({
           )}
         </div>
         <div className="flex items-center gap-2 relative">
-          {(isExpanded || itemsInDB.length === 0) && !isEditing && (
+          {isExpanded && !isEditing && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
