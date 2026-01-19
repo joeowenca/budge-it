@@ -295,7 +295,6 @@ export function BudgetCategory({
 
     if (result.success) {
       setShowArchiveDialog(false);
-      setIsEditing(false);
       router.refresh();
     } else {
       console.error("Failed to archive category:", result.error);
@@ -325,8 +324,9 @@ export function BudgetCategory({
                   emoji: categoryEditValues.emoji,
                   name: categoryEditValues.name,
                 }}
-                isEditing={true}
+                action="edit"
                 onChange={setCategoryEditValues}
+                onClose={() => null}
               />
               <div 
               className="text-sm text-red-600 p-1.25 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"

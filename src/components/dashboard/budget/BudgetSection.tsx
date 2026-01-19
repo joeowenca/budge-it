@@ -57,7 +57,7 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
             })
         )}
       </div>
-      <BudgetCategoryForm budgetType={budgetType} isAdding={isAdding} toggleIsAdding={(toggleIsAdding)} />
+      {isAdding && (<BudgetCategoryForm budgetType={budgetType} action="add" onClose={(toggleIsAdding)} />)}
     </div>
   );
 }
