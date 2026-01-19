@@ -250,14 +250,14 @@ export function BudgetCategory({
     }
   };
 
-  const handleNameChange = (itemId: number, value: string) => {
+  const handleItemNameChange = (itemId: number, value: string) => {
     setItemEditValues((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], name: value },
     }));
   };
 
-  const handleAmountChange = (itemId: number, value: string) => {
+  const handleItemAmountChange = (itemId: number, value: string) => {
     // Allow empty string, numbers, and decimals (including trailing dots)
     // Prevent letters and symbols other than dots
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
@@ -268,14 +268,14 @@ export function BudgetCategory({
     }
   };
 
-  const handleArchive = (itemId: number) => {
+  const handleItemArchive = (itemId: number) => {
     setItemEditValues((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], isArchived: true },
     }));
   };
 
-  const handleAdd = () => {
+  const handleCreateNewItem = () => {
     if (!newItem.name || !newItem.amount) {
       return;
     }
@@ -416,9 +416,9 @@ export function BudgetCategory({
                       key={item.id}
                       action="edit"
                       budgetItem={editItem}
-                      onNameChange={(value) => handleNameChange(item.id, value)}
-                      onAmountChange={(value) => handleAmountChange(item.id, value)}
-                      onArchive={() => handleArchive(item.id)}
+                      onNameChange={(value) => handleItemNameChange(item.id, value)}
+                      onAmountChange={(value) => handleItemAmountChange(item.id, value)}
+                      onArchive={() => handleItemArchive(item.id)}
                     />
                   );
                 }
@@ -460,7 +460,7 @@ export function BudgetCategory({
                   onNameChange={handleNewItemNameChange}
                   onAmountChange={handleNewItemAmountChange}
                   type={category.type}
-                  onAdd={handleAdd}
+                  onAdd={handleCreateNewItem}
                 />
               )}
             </div>
@@ -473,7 +473,7 @@ export function BudgetCategory({
                 onNameChange={handleNewItemNameChange}
                 onAmountChange={handleNewItemAmountChange}
                 type={category.type}
-                onAdd={handleAdd}
+                onAdd={handleCreateNewItem}
               />
             </div>
           )}
