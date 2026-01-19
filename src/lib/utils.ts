@@ -1,4 +1,4 @@
-import { ReadBudgetItemType } from "@/db/schema";
+import { FrequencyType } from "@/db/schema";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -14,8 +14,8 @@ export function convertAmountToCurrency(amount: number): string {
   }).format(amount / 100);
 }
 
-export const getFrequencyMultiplier = (item: ReadBudgetItemType) => {
-  switch (item.frequency) {
+export const getFrequencyMultiplier = (frequency: FrequencyType) => {
+  switch (frequency) {
     case "weekly":
       return 4;
     case "bi-weekly":

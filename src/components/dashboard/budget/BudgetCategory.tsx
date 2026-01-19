@@ -114,8 +114,23 @@ export function BudgetCategory({
     return itemsInDB.length + newItems.length;
   }
 
-  const totalAmount = itemsInDB.reduce((sum, item) => {
-    return sum + item.amount * getFrequencyMultiplier(item);
+  const totalAmount = [
+    ...itemsInDB,
+    ...newItems
+  ].reduce((sum, item) => {
+    let amountInCents = 0;
+
+    if ("amount" in item) {
+      if (typeof item.amount === "string") {
+        // New items: string like "10.00" → convert to cents
+        amountInCents = Math.round(Number(item.amount) * 100);
+      } else {
+        // DB items: already in cents
+        amountInCents = item.amount;
+      }
+    }
+
+    return sum + amountInCents * getFrequencyMultiplier(item.frequency);
   }, 0);
 
   const resetNewItem = () => {
