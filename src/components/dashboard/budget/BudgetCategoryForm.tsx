@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Plus, Undo } from "lucide-react";
 import EmojiPicker, { EmojiClickData, EmojiStyle, Categories } from "emoji-picker-react";
 import { BudgetType } from "@/db/schema";
+import { CategoryEditValueTypes } from "./BudgetCategory";
 
 type BudgetCategoryFormTypes = {
     budgetType?: BudgetType;
@@ -17,35 +18,39 @@ type BudgetCategoryFormTypes = {
     isAdding?: boolean;
     toggleIsAdding?: () => void;
     isEditing?: boolean;
-    onEmojiChange?: (emoji: string) => void;
-    onNameChange?: (name: string) => void;
+    onChange?: (category: CategoryEditValueTypes) => void;
 }
 
-export function BudgetCategoryForm({ budgetType, category, isAdding = false, toggleIsAdding, isEditing = false, onEmojiChange, onNameChange }: BudgetCategoryFormTypes) {
+export function BudgetCategoryForm({ budgetType, category, isAdding = false, toggleIsAdding, isEditing = false, onChange }: BudgetCategoryFormTypes) {
     const router = useRouter();
 
-    const [isCreating, setIsCreating] = useState(false);
+    const defaultCategory: CategoryEditValueTypes = {
+        emoji: "💵",
+        name: ""
+    }
+
     // Initialize with category values if in edit mode, otherwise use defaults
-    const [newCategoryEmoji, setNewCategoryEmoji] = useState(isEditing && category ? category.emoji : "💵");
-    const [newCategoryName, setNewCategoryName] = useState(isEditing && category ? category.name : "");
+    const [newCategory, setNewCategory] = useState<CategoryEditValueTypes>(defaultCategory);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Update local state when category prop changes (for edit mode)
     useEffect(() => {
         if (isEditing && category) {
-            setNewCategoryEmoji(category.emoji);
-            setNewCategoryName(category.name);
+            setNewCategory(category);
         }
     }, [isEditing, category]);
 
     const handleEmojiClick = (emojiData: EmojiClickData) => {
-    const newEmoji = emojiData.emoji;
-    setNewCategoryEmoji(newEmoji);
+    const categoryWithNewEmoji = {
+        emoji: emojiData.emoji,
+        name: newCategory.name
+    };
+    setNewCategory(categoryWithNewEmoji);
     setShowEmojiPicker(false);
     // If in edit mode, notify parent of change
-    if (isEditing && onEmojiChange) {
-      onEmojiChange(newEmoji);
+    if (isEditing && onChange) {
+      onChange(categoryWithNewEmoji);
     }
   };
 
@@ -63,9 +68,7 @@ export function BudgetCategoryForm({ budgetType, category, isAdding = false, tog
   }
 
   const closeAddCategory = () => {
-    setIsCreating(false);
-    setNewCategoryEmoji("💵");
-    setNewCategoryName("");
+    setNewCategory(defaultCategory);
     setShowEmojiPicker(false);
 
     if (toggleIsAdding) {
@@ -74,7 +77,7 @@ export function BudgetCategoryForm({ budgetType, category, isAdding = false, tog
   };
 
   const handleSubmit = async () => {
-    if (!newCategoryName.trim()) {
+    if (!newCategory.name.trim()) {
       return;
     }
 
@@ -84,8 +87,8 @@ export function BudgetCategoryForm({ budgetType, category, isAdding = false, tog
       if (budgetType) {
         const result = await createBudgetCategory({
             type: budgetType,
-            name: newCategoryName.trim(),
-            emoji: newCategoryEmoji,
+            name: newCategory.name.trim(),
+            emoji: newCategory.emoji,
         });
 
         if (result.success) {
@@ -118,7 +121,7 @@ export function BudgetCategoryForm({ budgetType, category, isAdding = false, tog
                             size="icon"
                             className={`text-xl ${showEmojiPicker && "border-primary bg-muted"}`}
                         >
-                            {newCategoryEmoji}
+                            {newCategory.emoji}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -150,13 +153,16 @@ export function BudgetCategoryForm({ budgetType, category, isAdding = false, tog
                     <Input
                     type="text"
                     placeholder="Category name"
-                    value={newCategoryName}
+                    value={newCategory.name}
                     onChange={(e) => {
-                      const newName = e.target.value;
-                      setNewCategoryName(newName);
+                      const categoryWithNewName = {
+                        emoji: newCategory.emoji,
+                        name: e.target.value
+                      };
+                      setNewCategory(categoryWithNewName)
                       // If in edit mode, notify parent of change
-                      if (isEditing && onNameChange) {
-                        onNameChange(newName);
+                      if (isEditing && onChange) {
+                        onChange(categoryWithNewName);
                       }
                     }}
                     onKeyDown={(e) => {
@@ -182,7 +188,7 @@ export function BudgetCategoryForm({ budgetType, category, isAdding = false, tog
                         {/* Confirm Button */}
                         <div 
                             onClick={handleSubmit}
-                            className={`rounded-full cursor-not-allowed text-primary bg-muted ${!newCategoryName.trim() && "opacity-50"} ${newCategoryName.trim() && "cursor-pointer hover:text-white hover:bg-primary"} p-1.25 transition-all`}
+                            className={`rounded-full cursor-not-allowed text-primary bg-muted ${!newCategory.name.trim() && "opacity-50"} ${newCategory.name.trim() && "cursor-pointer hover:text-white hover:bg-primary"} p-1.25 transition-all`}
                         >
                             {!isSubmitting ? <Plus className="size-4.5" strokeWidth={2.75} /> : "..."}
                         </div>

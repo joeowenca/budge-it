@@ -25,6 +25,11 @@ export type Category = {
   type: z.infer<typeof budgetTypeSchema>;
 };
 
+export type CategoryEditValueTypes = {
+  emoji: string;
+  name: string;
+}
+
 export type CreateItemDraft = Omit<CreateBudgetItemType, "amount"> & { amount: string, tempId: number };
 export type UpdateItemDraft = Omit<ReadBudgetItemType, "amount"> & { amount: string };
 
@@ -81,12 +86,35 @@ export function BudgetCategory({
       }
       return a.id - b.id;
     });
+
+  const defaultItem: CreateItemDraft = {
+    tempId: tempIdCounter--,
+    budgetCategoryId: category.id,
+    type: category.type,
+    name: "",
+    amount: "",
+    frequency: "monthly",
+    dayOfWeek: null,
+    dayOfMonth: 1,
+    dayOfMonthIsLast: false,
+    secondDayOfMonth: null,
+    secondDayOfMonthIsLast: false,
+    startDate: new Date(),
+    isArchived: false,
+    sortOrder: 0,
+  }
+
+  const originalCategoryValues: CategoryEditValueTypes = {
+    emoji: category.emoji,
+    name: category.name
+  }
+
+  const [isExpanded, setIsExpanded] = useState(activeItems.length === 0);
   const [isEditing, setIsEditing] = useState(getActiveItems().length === 0);
-  const [editValues, setEditValues] = useState<Record<number, UpdateItemDraft>>({});
+  const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
+  const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
-  const [editCategoryEmoji, setEditCategoryEmoji] = useState(category.emoji);
-  const [editCategoryName, setEditCategoryName] = useState(category.name);
   const [newItem, setNewItem] = useState<CreateItemDraft>({
     tempId: tempIdCounter--,
     budgetCategoryId: category.id,
@@ -103,7 +131,6 @@ export function BudgetCategory({
     isArchived: false,
     sortOrder: 0,
   });
-  const [isExpanded, setIsExpanded] = useState(activeItems.length === 0);
 
   function getActiveItems(): ReadBudgetItemType[] {
     return items.filter((item) => !item.isArchived).sort((a, b) => {
@@ -159,13 +186,15 @@ export function BudgetCategory({
   }
 
   const resetEditState = () => {
-    setEditValues({});
+    setItemEditValues({});
     setNewItems([]);
     resetNewItem();
     setIsEditing(false);
     // Restore original category values
-    setEditCategoryEmoji(category.emoji);
-    setEditCategoryName(category.name);
+    setCategoryEditValues({
+      emoji: category.emoji,
+      name: category.name
+    });
   }
 
   const toggleIsEditing = () => {
@@ -181,10 +210,12 @@ export function BudgetCategory({
           amount: (item.amount / 100).toFixed(2),
         };
       });
-      setEditValues(initialValues);
+      setItemEditValues(initialValues);
       // Initialize category edit values with current category values
-      setEditCategoryEmoji(category.emoji);
-      setEditCategoryName(category.name);
+      setCategoryEditValues({
+        emoji: category.emoji,
+        name: category.name
+      });
       setIsEditing(true);
 
       return;
@@ -195,12 +226,12 @@ export function BudgetCategory({
   };
 
   const handleSave = async () => {
-    // Construct array of updates from editValues
+    // Construct array of updates from itemEditValues
     // Convert amount from dollars (string) back to cents (number)
 
     if (getTotalItemsLength() === 0) return;
 
-    const updates = Object.values(editValues).map((item) => {
+    const updates = Object.values(itemEditValues).map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
       return {
         id: item.id,
@@ -231,12 +262,16 @@ export function BudgetCategory({
     });
 
     // Update category if emoji or name changed
-    const categoryUpdate = 
-      editCategoryEmoji !== category.emoji || editCategoryName !== category.name
-        ? updateBudgetCategory({
+    const categoryHasChanged =
+      originalCategoryValues.emoji !== categoryEditValues.emoji ||
+      originalCategoryValues.name !== categoryEditValues.name;
+
+    const categoryUpdate =
+      categoryHasChanged
+      ? updateBudgetCategory({
             id: category.id,
-            emoji: editCategoryEmoji,
-            name: editCategoryName,
+            emoji: categoryEditValues.emoji,
+            name: categoryEditValues.name,
           })
         : Promise.resolve({ success: true, data: [] });
 
@@ -264,7 +299,7 @@ export function BudgetCategory({
   };
 
   const handleNameChange = (itemId: number, value: string) => {
-    setEditValues((prev) => ({
+    setItemEditValues((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], name: value },
     }));
@@ -274,7 +309,7 @@ export function BudgetCategory({
     // Allow empty string, numbers, and decimals (including trailing dots)
     // Prevent letters and symbols other than dots
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setEditValues((prev) => ({
+      setItemEditValues((prev) => ({
         ...prev,
         [itemId]: { ...prev[itemId], amount: value },
       }));
@@ -282,7 +317,7 @@ export function BudgetCategory({
   };
 
   const handleArchive = (itemId: number) => {
-    setEditValues((prev) => ({
+    setItemEditValues((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], isArchived: true },
     }));
@@ -348,12 +383,11 @@ export function BudgetCategory({
               <BudgetCategoryForm 
                 category={{
                   ...category,
-                  emoji: editCategoryEmoji,
-                  name: editCategoryName,
+                  emoji: categoryEditValues.emoji,
+                  name: categoryEditValues.name,
                 }}
                 isEditing={true}
-                onEmojiChange={setEditCategoryEmoji}
-                onNameChange={setEditCategoryName}
+                onChange={setCategoryEditValues}
               />
               <div 
               className="text-sm text-red-600 p-1.25 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
@@ -420,7 +454,7 @@ export function BudgetCategory({
             <div className={`space-y-1 ${isEditing ? "mt-1" : "mt-3"}`}>
               {activeItems.map((item) => {
                 if (isEditing) {
-                  const editItem = editValues[item.id];
+                  const editItem = itemEditValues[item.id];
                   // Skip archived items in edit mode
                   if (!editItem || editItem.isArchived) {
                     return null;
@@ -513,7 +547,7 @@ export function BudgetCategory({
             </div>
             <DialogTitle className="text-center text-xl">Are you sure?</DialogTitle>
             <DialogDescription className="text-center text-md mb-1">
-              Archiving <b>{editCategoryName}</b> will
+              Archiving <b>{categoryEditValues.name}</b> will
               <br />
               archive all its <b>{category.type}{category.type.toString() === "expense" && "s"}</b>
             </DialogDescription>
