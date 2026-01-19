@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
+import { convertAmountToCurrency, getFrequencyMultiplier } from "@/lib/utils";
 
 export type Category = {
   id: number;
@@ -33,20 +34,10 @@ export type CategoryEditValueTypes = {
 export type CreateItemDraft = Omit<CreateBudgetItemType, "amount"> & { amount: string, tempId: number };
 export type UpdateItemDraft = Omit<ReadBudgetItemType, "amount"> & { amount: string };
 
-let tempIdCounter = -1;
-
 interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
-}
-
-function formatAmount(amount: number): string {
-  // Amount is stored in cents, convert to dollars
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount / 100);
 }
 
 interface TotalAmountProps {
@@ -68,6 +59,8 @@ function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
     </span>
   );
 }
+
+let tempIdCounter = -1;
 
 export function BudgetCategory({
   category,
@@ -146,21 +139,6 @@ export function BudgetCategory({
   function getTotalItemsLength(): number {
     return activeItems.length + newItems.length;
   }
-
-  const getFrequencyMultiplier = (item: ReadBudgetItemType) => {
-    switch (item.frequency) {
-      case "weekly":
-        return 4;
-      case "bi-weekly":
-        return 2;
-      case "semi-monthly":
-        return 2;
-      case "monthly":
-        return 1;
-      default:
-        return 1;
-    }
-  };
 
   const totalAmount = activeItems.reduce((sum, item) => {
     return sum + item.amount * getFrequencyMultiplier(item);
@@ -443,7 +421,7 @@ export function BudgetCategory({
               </button>
             </div>
           )}
-          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={formatAmount(totalAmount)} />
+          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={convertAmountToCurrency(totalAmount)} />
         </div>
       </div>
 
@@ -530,7 +508,7 @@ export function BudgetCategory({
           <div className="pt-1">
             <div className="flex items-center justify-between mt-1">
               <span className="font-medium">Monthly total</span>
-              <TotalAmount title={title} totalAmount={formatAmount(totalAmount)} />
+              <TotalAmount title={title} totalAmount={convertAmountToCurrency(totalAmount)} />
             </div>
           </div>
         </>

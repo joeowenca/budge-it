@@ -1,5 +1,6 @@
 import { ReadBudgetItemType } from "@/db/schema";
 import { Calendar } from "lucide-react";
+import { getOrdinal, getLastDayOfMonth } from "@/lib/utils";
 
 function formatAmount(amount: number): string {
   // Amount is stored in cents, convert to dollars
@@ -13,32 +14,11 @@ interface BudgetItemProps {
   item: ReadBudgetItemType;
 }
 
-function getOrdinal(n: number): string {
-  if (n < 1 || n > 31) return String(n); // just in case
-  if (n >= 11 && n <= 13) return n + "th"; // special case for teens
-  const lastDigit = n % 10;
-  switch (lastDigit) {
-    case 1:
-      return n + "st";
-    case 2:
-      return n + "nd";
-    case 3:
-      return n + "rd";
-    default:
-      return n + "th";
-  }
-}
-
 function capitalizeFirstLetter(str: string): string {
   if (!str) return "";
 
   const trimmed = str.slice(0, 3);
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-}
-
-function getLastDayOfCurrentMonth(): number {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 }
 
 type DateDescriptionProps = {
@@ -65,7 +45,7 @@ export function DateDescription({ item }: DateDescriptionProps) {
         <>
           {getOrdinal(item.dayOfMonth)} &
           {item.secondDayOfMonthIsLast
-            ? ` ${getLastDayOfCurrentMonth()}`
+            ? ` ${getLastDayOfMonth(new Date())}`
             : item.secondDayOfMonth
             ? <> {getOrdinal(item.secondDayOfMonth)}</>
             : ""}
