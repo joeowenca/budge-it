@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
+import { AmountPill, AmountPillColorTypes } from "@/components/AmountPill";
 import { batchUpdateBudgetItems, batchCreateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
 import { budgetTypeSchema, ReadBudgetItemType, CreateBudgetItemType } from "@/db/schema";
 import { z } from "zod";
@@ -38,26 +39,6 @@ interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
-}
-
-interface TotalAmountProps {
-  totalAmount: string;
-  title?: string;
-  isExpanded?: boolean;
-}
-
-const titleColors: Record<string, string> = {
-  Income: "text-primary bg-primary/10",
-  Expenses: "text-red-600 bg-red-600/10",
-  Savings: "text-green-700 bg-green-600/10",
-};
-
-function TotalAmount({ totalAmount, title, isExpanded }: TotalAmountProps) {
-  return (
-    <span className={`font-medium text-sm tracking-wider ml-4 px-2.5 py-1 ${titleColors[title ?? ""] || "text-gray-900 bg-gray-600/10"} ${isExpanded && "invisible"} rounded-full`}>
-      {totalAmount}
-    </span>
-  );
 }
 
 let tempIdCounter = -1;
@@ -100,6 +81,12 @@ export function BudgetCategory({
   const originalCategoryValues: CategoryEditValueTypes = {
     emoji: category.emoji,
     name: category.name
+  }
+
+  const titleColors: Record<string, AmountPillColorTypes> = {
+    Income: "blue",
+    Expenses: "red",
+    Savings: "green"
   }
 
   const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
@@ -395,7 +382,7 @@ export function BudgetCategory({
               </button>
             </div>
           )}
-          <TotalAmount title={title} isExpanded={isExpanded} totalAmount={convertAmountToCurrency(totalAmount)} />
+          <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} className={`${isExpanded && "invisible"}`} />
         </div>
       </div>
 
@@ -482,7 +469,7 @@ export function BudgetCategory({
           <div className="pt-1">
             <div className="flex items-center justify-between mt-1">
               <span className="font-medium">Monthly total</span>
-              <TotalAmount title={title} totalAmount={convertAmountToCurrency(totalAmount)} />
+              <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} />
             </div>
           </div>
         </>
@@ -523,4 +510,3 @@ export function BudgetCategory({
     </div>
   );
 }
-

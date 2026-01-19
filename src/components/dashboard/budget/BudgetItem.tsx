@@ -1,14 +1,7 @@
 import { ReadBudgetItemType } from "@/db/schema";
 import { Calendar } from "lucide-react";
-import { getOrdinal, getLastDayOfMonth } from "@/lib/utils";
-
-function formatAmount(amount: number): string {
-  // Amount is stored in cents, convert to dollars
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount / 100);
-}
+import { AmountPill } from "@/components/AmountPill";
+import { getOrdinal, getLastDayOfMonth, convertAmountToCurrency } from "@/lib/utils";
 
 interface BudgetItemProps {
   item: ReadBudgetItemType;
@@ -70,13 +63,11 @@ export function BudgetItem({ item }: BudgetItemProps) {
           <DateDescription item={item} />
         </div>
         <span className="text-xs text-muted-foreground tracking-[0.2em] ml-4 mr-1">
-            {item.frequency === "weekly" && "4x"}
-            {item.frequency === "bi-weekly" && "2x"}
-            {item.frequency === "semi-monthly" && "2x"}
-          </span>
-        <div className="font-medium px-2.5 py-1 text-yellow-800 bg-yellow-500/15 rounded-full tracking-wider">
-          {formatAmount(item.amount)}
-        </div>
+          {item.frequency === "weekly" && "4x"}
+          {item.frequency === "bi-weekly" && "2x"}
+          {item.frequency === "semi-monthly" && "2x"}
+        </span>
+        <AmountPill amount={convertAmountToCurrency(item.amount)} color="yellow" />
       </div>
     </div>
   );
