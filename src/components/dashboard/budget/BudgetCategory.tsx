@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
-import { AmountPill, AmountPillColorTypes } from "@/components/AmountPill";
+import { AmountPill } from "@/components/AmountPill";
 import { batchUpdateBudgetItems, batchCreateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
 import { budgetTypeSchema, ReadBudgetItemType, CreateBudgetItemType } from "@/db/schema";
 import { z } from "zod";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
 import { convertAmountToCurrency, getFrequencyMultiplier } from "@/lib/utils";
+import { titleColors } from "./BudgetSection";
 
 export type Category = {
   id: number;
@@ -35,13 +36,13 @@ export type CategoryEditValueTypes = {
 export type CreateItemDraft = Omit<CreateBudgetItemType, "amount"> & { amount: string, tempId: number };
 export type UpdateItemDraft = Omit<ReadBudgetItemType, "amount"> & { amount: string };
 
+let tempIdCounter = -1;
+
 interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
 }
-
-let tempIdCounter = -1;
 
 export function BudgetCategory({
   category,
@@ -49,6 +50,7 @@ export function BudgetCategory({
   title,
 }: BudgetCategoryProps) {
   const router = useRouter();
+
   const itemsInDB = items
     .filter((item) => !item.isArchived)
     .sort((a, b) => {
@@ -82,12 +84,6 @@ export function BudgetCategory({
     name: category.name
   }
 
-  const titleColors: Record<string, AmountPillColorTypes> = {
-    Income: "blue",
-    Expenses: "red",
-    Savings: "green"
-  }
-
   const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
   const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
   const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
@@ -119,8 +115,6 @@ export function BudgetCategory({
       );
     }, 0);
 
-
-
   const resetNewItem = () => {
     setNewItem(defaultItem);
   }
@@ -130,7 +124,6 @@ export function BudgetCategory({
     setNewItems([]);
     resetNewItem();
     setIsEditing(false);
-    // Restore original category values
     setCategoryEditValues({
       emoji: category.emoji,
       name: category.name
@@ -181,8 +174,7 @@ export function BudgetCategory({
       };
     });
 
-    // Construct array of new items to create
-    const creates: CreateBudgetItemType[] = newItems.map((item) => {
+    const itemsToCreate: CreateBudgetItemType[] = newItems.map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
       return {
         budgetCategoryId: category.id,
@@ -201,7 +193,6 @@ export function BudgetCategory({
       };
     });
 
-    // Update category if emoji or name changed
     const categoryHasChanged =
       originalCategoryValues.emoji !== categoryEditValues.emoji ||
       originalCategoryValues.name !== categoryEditValues.name;
@@ -215,10 +206,9 @@ export function BudgetCategory({
           })
         : Promise.resolve({ success: true, data: [] });
 
-    // Call batchUpdateBudgetItems, batchCreateBudgetItems, and updateBudgetCategory
     const [updateResult, createResult, categoryResult] = await Promise.all([
       updates.length > 0 ? batchUpdateBudgetItems(updates) : Promise.resolve({ success: true, data: [] }),
-      creates.length > 0 ? batchCreateBudgetItems(creates) : Promise.resolve({ success: true, data: [] }),
+      itemsToCreate.length > 0 ? batchCreateBudgetItems(itemsToCreate) : Promise.resolve({ success: true, data: [] }),
       categoryUpdate,
     ]);
 
@@ -243,8 +233,6 @@ export function BudgetCategory({
   };
 
   const handleItemAmountChange = (itemId: number, value: string) => {
-    // Allow empty string, numbers, and decimals (including trailing dots)
-    // Prevent letters and symbols other than dots
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setItemEditValues((prev) => ({
         ...prev,
@@ -264,9 +252,7 @@ export function BudgetCategory({
     if (!newItem.name || !newItem.amount) {
       return;
     }
-    // Add the current newItem to the newItems array
     setNewItems((prev) => [...prev, { ...newItem }]);
-    // Reset newItem to empty
     resetNewItem();
   };
 
@@ -275,7 +261,6 @@ export function BudgetCategory({
   };
 
   const handleNewItemAmountChange = (value: string) => {
-    // Allow empty string, numbers, and decimals (including trailing dots)
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setNewItem((prev) => ({ ...prev, amount: value }));
     }

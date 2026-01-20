@@ -6,6 +6,13 @@ import { BudgetCategory } from "./BudgetCategory";
 import type { BudgetType } from "@/db/schema";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
 import { Plus } from "lucide-react";
+import { AmountPillColorTypes } from "@/components/AmountPill";
+
+export const titleColors: Record<string, AmountPillColorTypes> = {
+  Income: "blue",
+  Expenses: "red",
+  Savings: "green"
+}
 
 interface BudgetSectionProps {
   title: string;
