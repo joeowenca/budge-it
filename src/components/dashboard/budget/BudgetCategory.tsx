@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
@@ -92,8 +92,16 @@ export function BudgetCategory({
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
   const [newItem, setNewItem] = useState<CreateItemDraft>(defaultItem);
 
-  const itemsToBeArchivedCount = Object.values(itemEditValues).filter(item => item.isArchived).length;
-  const activeItemsCount = itemsInDB.length - itemsToBeArchivedCount + newItems.length;
+  const itemsToBeArchivedCount = useMemo(
+    () => Object.values(itemEditValues).filter(i => i.isArchived).length,
+    [itemEditValues]
+  );
+
+  const activeItemsCount = useMemo(
+    () => itemsInDB.length - itemsToBeArchivedCount + newItems.length,
+    [itemsInDB.length, itemsToBeArchivedCount, newItems.length]
+  );
+
   const isEmpty = activeItemsCount === 0;
   const canUndo = itemsInDB.length > 0;
 
@@ -103,17 +111,19 @@ export function BudgetCategory({
       : amount;
   }
 
-  const totalAmount = [
-    ...itemsInDB.map(item => itemEditValues[item.id] ?? item),
-    ...newItems,
-  ]
-    .filter(item => !item.isArchived)
-    .reduce((sum, item) => {
-      return (
-        sum +
-        toCents(item.amount) * getFrequencyMultiplier(item.frequency)
-      );
-    }, 0);
+  const totalAmount = useMemo(() => {
+    return [
+      ...itemsInDB.map(item => itemEditValues[item.id] ?? item),
+      ...newItems,
+    ]
+      .filter(item => !item.isArchived)
+      .reduce((sum, item) => {
+        return (
+          sum +
+          toCents(item.amount) * getFrequencyMultiplier(item.frequency)
+        );
+      }, 0);
+  }, [itemsInDB, itemEditValues, newItems]);
 
   const resetNewItem = () => {
     setNewItem(defaultItem);
