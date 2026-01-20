@@ -7,7 +7,7 @@ import { Category } from "@/components/dashboard/budget/BudgetCategory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Undo } from "lucide-react";
+import { Plus, Undo, Loader2 } from "lucide-react";
 import EmojiPicker, { EmojiClickData, EmojiStyle, Categories } from "emoji-picker-react";
 import { BudgetType } from "@/db/schema";
 import { CategoryEditValueTypes } from "./BudgetCategory";
@@ -15,8 +15,8 @@ import { CategoryEditValueTypes } from "./BudgetCategory";
 type BudgetCategoryFormTypes = {
     budgetType?: BudgetType;
     category?: Category;
-    action?: "add" | "edit"; // Replaces isAdding/isEditing
-    onClose: () => void;    // Renamed from toggleIsAdding for clarity
+    action?: "add" | "edit";
+    onClose: () => void;
     onChange?: (category: CategoryEditValueTypes) => void;
 }
 
@@ -28,21 +28,17 @@ export function BudgetCategoryForm({
     onChange 
 }: BudgetCategoryFormTypes) {
     const router = useRouter();
-
-    // Derived state helpers to keep JSX clean
     const isEditing = action === "edit";
-
     const defaultCategory: CategoryEditValueTypes = {
         emoji: "💵",
         name: ""
     }
 
-    // Initialize with category values if in edit mode, otherwise use defaults
     const [newCategory, setNewCategory] = useState<CategoryEditValueTypes>(defaultCategory);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Update local state when category prop changes (for edit mode)
     useEffect(() => {
         if (isEditing && category) {
             setNewCategory(category);
@@ -57,7 +53,6 @@ export function BudgetCategoryForm({
         setNewCategory(categoryWithNewEmoji);
         setShowEmojiPicker(false);
         
-        // If in edit mode, notify parent of change
         if (isEditing && onChange) {
             onChange(categoryWithNewEmoji);
         }
@@ -79,10 +74,13 @@ export function BudgetCategoryForm({
     const closeForm = () => {
         setNewCategory(defaultCategory);
         setShowEmojiPicker(false);
+        setErrorMessage(null);
         onClose();
     };
 
     const handleSubmit = async () => {
+        setErrorMessage(null);
+
         if (!newCategory.name.trim()) {
             return;
         }
@@ -102,16 +100,17 @@ export function BudgetCategoryForm({
                     router.refresh();
                 } else {
                     console.error("Failed to create category:", result.error);
+                    setErrorMessage(result.error as string);
                 }
             }
         } catch (error) {
             console.error("Error creating category:", error);
+            setErrorMessage("Something went wrong. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // If no action is passed, do not render
     if (!action) return null;
 
     return (
@@ -159,6 +158,7 @@ export function BudgetCategoryForm({
                 placeholder="Category name"
                 value={newCategory.name}
                 onChange={(e) => {
+                    if (errorMessage) setErrorMessage(null);
                     const categoryWithNewName = {
                         emoji: newCategory.emoji,
                         name: e.target.value
@@ -176,7 +176,7 @@ export function BudgetCategoryForm({
                         closeForm();
                     }
                 }}
-                className={`flex-1 font-semibold ${isEditing && "max-w-36 py-0"}`}
+                className={`flex-1 font-semibold ${isEditing && "max-w-36 py-0"} ${errorMessage ? "border-red-500 focus-visible:ring-red-500 pr-8" : ""}`}
                 autoFocus
             />
 
@@ -195,9 +195,14 @@ export function BudgetCategoryForm({
                     onClick={handleSubmit}
                     className={`rounded-full cursor-not-allowed text-primary bg-muted ${!newCategory.name.trim() && "opacity-50"} ${newCategory.name.trim() && "cursor-pointer hover:text-white hover:bg-primary"} p-1.25 transition-all`}
                 >
-                    {!isSubmitting ? <Plus className="size-4.5" strokeWidth={2.75} /> : "..."}
+                    {!isSubmitting ? <Plus className="size-4.5" strokeWidth={2.75} /> : <Loader2 className="size-4.5 animate-spin" strokeWidth={2.75} />}
                 </div>
             </div>
+            {errorMessage && (
+                <p className="text-xs text-red-500 font-medium absolute top-10 left-11">
+                    {errorMessage}
+                </p>
+            )}
         </div>
     );
 }

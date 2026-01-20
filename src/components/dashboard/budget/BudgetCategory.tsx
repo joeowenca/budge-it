@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
-import { AmountPill, AmountPillColorTypes } from "@/components/AmountPill";
+import { AmountPill } from "@/components/AmountPill";
 import { batchUpdateBudgetItems, batchCreateBudgetItems, updateBudgetCategory } from "@/app/actions/budgetActions";
 import { budgetTypeSchema, ReadBudgetItemType, CreateBudgetItemType } from "@/db/schema";
 import { z } from "zod";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { BudgetCategoryForm } from "./BudgetCategoryForm";
 import { convertAmountToCurrency, getFrequencyMultiplier } from "@/lib/utils";
+import { titleColors } from "./BudgetSection";
 
 export type Category = {
   id: number;
@@ -35,13 +36,13 @@ export type CategoryEditValueTypes = {
 export type CreateItemDraft = Omit<CreateBudgetItemType, "amount"> & { amount: string, tempId: number };
 export type UpdateItemDraft = Omit<ReadBudgetItemType, "amount"> & { amount: string };
 
+let tempIdCounter = -1;
+
 interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
 }
-
-let tempIdCounter = -1;
 
 export function BudgetCategory({
   category,
@@ -49,7 +50,7 @@ export function BudgetCategory({
   title,
 }: BudgetCategoryProps) {
   const router = useRouter();
-  // Stable sort: sort by sortOrder (ascending) first, then by id (ascending) as tie-breaker
+
   const itemsInDB = items
     .filter((item) => !item.isArchived)
     .sort((a, b) => {
@@ -83,12 +84,6 @@ export function BudgetCategory({
     name: category.name
   }
 
-  const titleColors: Record<string, AmountPillColorTypes> = {
-    Income: "blue",
-    Expenses: "red",
-    Savings: "green"
-  }
-
   const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
   const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
   const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
@@ -97,28 +92,28 @@ export function BudgetCategory({
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
   const [newItem, setNewItem] = useState<CreateItemDraft>(defaultItem);
 
-  function totalNumberOfItems(): number {
-    return itemsInDB.length + newItems.length;
+  const itemsToBeArchivedCount = Object.values(itemEditValues).filter(item => item.isArchived).length;
+  const activeItemsCount = itemsInDB.length - itemsToBeArchivedCount + newItems.length;
+  const isEmpty = activeItemsCount === 0;
+  const canUndo = itemsInDB.length > 0;
+
+  function toCents(amount: number | string): number {
+    return typeof amount === "string"
+      ? Math.round(Number(amount) * 100)
+      : amount;
   }
 
   const totalAmount = [
-    ...itemsInDB,
-    ...newItems
-  ].reduce((sum, item) => {
-    let amountInCents = 0;
-
-    if ("amount" in item) {
-      if (typeof item.amount === "string") {
-        // New items: string like "10.00" → convert to cents
-        amountInCents = Math.round(Number(item.amount) * 100);
-      } else {
-        // DB items: already in cents
-        amountInCents = item.amount;
-      }
-    }
-
-    return sum + amountInCents * getFrequencyMultiplier(item.frequency);
-  }, 0);
+    ...itemsInDB.map(item => itemEditValues[item.id] ?? item),
+    ...newItems,
+  ]
+    .filter(item => !item.isArchived)
+    .reduce((sum, item) => {
+      return (
+        sum +
+        toCents(item.amount) * getFrequencyMultiplier(item.frequency)
+      );
+    }, 0);
 
   const resetNewItem = () => {
     setNewItem(defaultItem);
@@ -129,7 +124,6 @@ export function BudgetCategory({
     setNewItems([]);
     resetNewItem();
     setIsEditing(false);
-    // Restore original category values
     setCategoryEditValues({
       emoji: category.emoji,
       name: category.name
@@ -137,20 +131,24 @@ export function BudgetCategory({
   }
 
   const toggleIsEditing = () => {
-    if (totalNumberOfItems() === 0) return;
+    if (canUndo && isEditing) {
+      resetEditState();
+      return;
+    }
+
+    if (isEmpty) return;
 
     if (!isEditing) {
-      // ENTERING Edit Mode: Initialize values immediately
-      // Convert amount from cents (number) to dollars (string), preserving 2 decimal places
       const initialValues: Record<number, UpdateItemDraft> = {};
+
       itemsInDB.forEach((item) => {
         initialValues[item.id] = {
           ...item,
           amount: (item.amount / 100).toFixed(2),
         };
       });
+
       setItemEditValues(initialValues);
-      // Initialize category edit values with current category values
       setCategoryEditValues({
         emoji: category.emoji,
         name: category.name
@@ -160,15 +158,11 @@ export function BudgetCategory({
       return;
     }
 
-    // EXITING Edit Mode (Cancel): Clear values
     resetEditState();
   };
 
   const handleSave = async () => {
-    // Construct array of updates from itemEditValues
-    // Convert amount from dollars (string) back to cents (number)
-
-    if (totalNumberOfItems() === 0) return;
+    if (isEmpty) return;
 
     const updates = Object.values(itemEditValues).map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
@@ -180,8 +174,7 @@ export function BudgetCategory({
       };
     });
 
-    // Construct array of new items to create
-    const creates: CreateBudgetItemType[] = newItems.map((item) => {
+    const itemsToCreate: CreateBudgetItemType[] = newItems.map((item) => {
       const amountInCents = Math.round(parseFloat(item.amount) * 100);
       return {
         budgetCategoryId: category.id,
@@ -200,7 +193,6 @@ export function BudgetCategory({
       };
     });
 
-    // Update category if emoji or name changed
     const categoryHasChanged =
       originalCategoryValues.emoji !== categoryEditValues.emoji ||
       originalCategoryValues.name !== categoryEditValues.name;
@@ -214,20 +206,16 @@ export function BudgetCategory({
           })
         : Promise.resolve({ success: true, data: [] });
 
-    // Call batchUpdateBudgetItems, batchCreateBudgetItems, and updateBudgetCategory
     const [updateResult, createResult, categoryResult] = await Promise.all([
       updates.length > 0 ? batchUpdateBudgetItems(updates) : Promise.resolve({ success: true, data: [] }),
-      creates.length > 0 ? batchCreateBudgetItems(creates) : Promise.resolve({ success: true, data: [] }),
+      itemsToCreate.length > 0 ? batchCreateBudgetItems(itemsToCreate) : Promise.resolve({ success: true, data: [] }),
       categoryUpdate,
     ]);
 
     if (updateResult.success && createResult.success && categoryResult.success) {
-      // Clear edit state and toggle isEditing to false
       resetEditState();
-      // Refresh the page data to show updated items
       router.refresh();
     } else {
-      // Handle error (could add toast notification here)
       const errorMessage = 
         (updateResult.success === false && 'error' in updateResult ? updateResult.error : undefined) ||
         (createResult.success === false && 'error' in createResult ? createResult.error : undefined) ||
@@ -245,8 +233,6 @@ export function BudgetCategory({
   };
 
   const handleItemAmountChange = (itemId: number, value: string) => {
-    // Allow empty string, numbers, and decimals (including trailing dots)
-    // Prevent letters and symbols other than dots
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setItemEditValues((prev) => ({
         ...prev,
@@ -266,9 +252,7 @@ export function BudgetCategory({
     if (!newItem.name || !newItem.amount) {
       return;
     }
-    // Add the current newItem to the newItems array
     setNewItems((prev) => [...prev, { ...newItem }]);
-    // Reset newItem to empty
     resetNewItem();
   };
 
@@ -277,7 +261,6 @@ export function BudgetCategory({
   };
 
   const handleNewItemAmountChange = (value: string) => {
-    // Allow empty string, numbers, and decimals (including trailing dots)
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setNewItem((prev) => ({ ...prev, amount: value }));
     }
@@ -352,7 +335,7 @@ export function BudgetCategory({
                 e.stopPropagation();
                 toggleIsEditing();
               }}
-              className={`p-1.5 bg-muted rounded-full transition-all ${itemsInDB.length === 0 ? "text-muted-foreground cursor-not-allowed" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
+              className={`p-1.5 bg-muted rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed opacity-50" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
               aria-label="Edit category"
             >
               <Pencil className="size-4.5" strokeWidth={2} />
@@ -365,7 +348,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${itemsInDB.length === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${canUndo ? "cursor-pointer hover:text-white hover:bg-primary" : "cursor-not-allowed text-muted-foreground opacity-50"}`}
                 aria-label="Cancel editing"
               >
                 <Undo className="size-4.5" strokeWidth={2.5} />
@@ -375,7 +358,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   handleSave();
                 }}
-                className={`p-1.25 bg-muted rounded-full transition-all ${totalNumberOfItems() === 0 ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
+                className={`p-1.25 bg-muted rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground opacity-50" : "cursor-pointer text-green-600 hover:text-white hover:bg-green-500"}`}
                 aria-label="Save changes"
               >
                 <CheckIcon className="size-4.5" strokeWidth={3} />
@@ -452,20 +435,7 @@ export function BudgetCategory({
               )}
             </div>
           )}
-          {itemsInDB.length === 0 && isEditing && newItems.length === 0 && (
-            <div className="space-y-1 mt-1">
-              <BudgetItemForm
-                action="add"
-                budgetItem={newItem}
-                onNameChange={handleNewItemNameChange}
-                onAmountChange={handleNewItemAmountChange}
-                type={category.type}
-                onAdd={handleCreateNewItem}
-              />
-            </div>
-          )}
 
-          {/* Total at bottom - Tally sheet style */}
           <div className="pt-1">
             <div className="flex items-center justify-between">
               <span className="font-medium">Monthly total</span>
@@ -475,7 +445,6 @@ export function BudgetCategory({
         </>
       )}
 
-      {/* Archive Confirmation Dialog */}
       <Dialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
         <DialogContent showCloseButton={false} className="sm:max-w-sm min-w-0 gap-2">
           <DialogHeader>

@@ -143,12 +143,17 @@ export async function createBudgetCategory(
       where: and(
         eq(budgetCategories.userId, user.id),
         eq(budgetCategories.type, validatedData.type),
-        eq(budgetCategories.name, validatedData.name)
+        eq(budgetCategories.name, validatedData.name),
+        eq(budgetCategories.isArchived, false)
       ),
     });
 
     if (existingCategory) {
-      return { success: true, data: existingCategory };
+      return { 
+          success: false, 
+          error: "Category already exists",
+          data: existingCategory
+      };
     }
 
     // Create new category
