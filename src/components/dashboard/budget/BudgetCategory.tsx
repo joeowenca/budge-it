@@ -90,29 +90,36 @@ export function BudgetCategory({
 
   const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
   const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
-  const [isEmpty, setIsEmpty] = useState<boolean>(itemsInDB.length === 0);
   const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
   const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
   const [newItem, setNewItem] = useState<CreateItemDraft>(defaultItem);
 
+  const itemsToBeArchivedCount = Object.values(itemEditValues).filter(item => item.isArchived).length;
+  const activeItemsCount = itemsInDB.length - itemsToBeArchivedCount + newItems.length;
+  const isEmpty = activeItemsCount === 0;
+  const canUndo = itemsInDB.length > 0;
+
+  function toCents(amount: number | string): number {
+    return typeof amount === "string"
+      ? Math.round(Number(amount) * 100)
+      : amount;
+  }
+
   const totalAmount = [
-    ...itemsInDB,
-    ...newItems
-  ].reduce((sum, item) => {
-    let amountInCents = 0;
+    ...itemsInDB.map(item => itemEditValues[item.id] ?? item),
+    ...newItems,
+  ]
+    .filter(item => !item.isArchived)
+    .reduce((sum, item) => {
+      return (
+        sum +
+        toCents(item.amount) * getFrequencyMultiplier(item.frequency)
+      );
+    }, 0);
 
-    if ("amount" in item) {
-      if (typeof item.amount === "string") {
-        amountInCents = Math.round(Number(item.amount) * 100);
-      } else {
-        amountInCents = item.amount;
-      }
-    }
 
-    return sum + amountInCents * getFrequencyMultiplier(item.frequency);
-  }, 0);
 
   const resetNewItem = () => {
     setNewItem(defaultItem);
@@ -131,20 +138,24 @@ export function BudgetCategory({
   }
 
   const toggleIsEditing = () => {
+    if (canUndo && isEditing) {
+      resetEditState();
+      return;
+    }
+
     if (isEmpty) return;
 
     if (!isEditing) {
-      // ENTERING Edit Mode: Initialize values immediately
-      // Convert amount from cents (number) to dollars (string), preserving 2 decimal places
       const initialValues: Record<number, UpdateItemDraft> = {};
+
       itemsInDB.forEach((item) => {
         initialValues[item.id] = {
           ...item,
           amount: (item.amount / 100).toFixed(2),
         };
       });
+
       setItemEditValues(initialValues);
-      // Initialize category edit values with current category values
       setCategoryEditValues({
         emoji: category.emoji,
         name: category.name
@@ -154,14 +165,10 @@ export function BudgetCategory({
       return;
     }
 
-    // EXITING Edit Mode (Cancel): Clear values
     resetEditState();
   };
 
   const handleSave = async () => {
-    // Construct array of updates from itemEditValues
-    // Convert amount from dollars (string) back to cents (number)
-
     if (isEmpty) return;
 
     const updates = Object.values(itemEditValues).map((item) => {
@@ -298,19 +305,6 @@ export function BudgetCategory({
     }
   }
 
-  function calculateTotalNumberOfItems(): number {
-    const itemsToBeArchived = Object.values(itemEditValues).filter(item => item.isArchived).length;
-    return itemsInDB.length - itemsToBeArchived + newItems.length;
-  }
-
-  useEffect(() => {
-    setIsEmpty(calculateTotalNumberOfItems() === 0);
-  }, []);
-
-  useEffect(() => {
-    setIsEmpty(calculateTotalNumberOfItems() === 0);
-  }, [itemEditValues, newItems, items]);
-
   return (
     <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.12)] transition-colors">
       {/* Category Header - Clickable */}
@@ -369,7 +363,7 @@ export function BudgetCategory({
                   e.stopPropagation();
                   toggleIsEditing();
                 }}
-                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${isEmpty ? "cursor-not-allowed text-muted-foreground opacity-50" : "cursor-pointer hover:text-white hover:bg-primary"}`}
+                className={`p-1.25 bg-muted text-muted-foreground rounded-full transition-all ${canUndo ? "cursor-pointer hover:text-white hover:bg-primary" : "cursor-not-allowed text-muted-foreground opacity-50"}`}
                 aria-label="Cancel editing"
               >
                 <Undo className="size-4.5" strokeWidth={2.5} />
