@@ -7,7 +7,7 @@ import { Category } from "@/components/dashboard/budget/BudgetCategory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Undo, Loader2 } from "lucide-react";
+import { Plus, X, Loader2 } from "lucide-react";
 import EmojiPicker, { EmojiClickData, EmojiStyle, Categories } from "emoji-picker-react";
 import { BudgetType } from "@/db/schema";
 import { CategoryEditValueTypes } from "./BudgetCategory";
@@ -185,9 +185,9 @@ export function BudgetCategoryForm({
                 {/* Cancel Button */}
                 <div
                     onClick={closeForm}
-                    className="rounded-full cursor-pointer bg-muted text-muted-foreground hover:text-white hover:bg-primary p-1.25 transition-all"
+                    className="rounded-full cursor-pointer text-red-600 bg-muted hover:text-white hover:bg-red-600 p-1.25 transition-all"
                 >
-                    <Undo className="size-4.5" strokeWidth={2.5} />
+                    <X className="size-4.5" strokeWidth={2.5} />
                 </div>
 
                 {/* Confirm Button */}

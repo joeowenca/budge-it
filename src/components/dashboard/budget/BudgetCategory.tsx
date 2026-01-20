@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Pencil, CheckIcon, X as XIcon, Undo, TriangleAlert } from "lucide-react";
+import { ChevronRight, Pencil, CheckIcon, X as XIcon, Trash2, Undo, TriangleAlert } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
 import { AmountPill } from "@/components/AmountPill";
@@ -328,7 +328,7 @@ export function BudgetCategory({
                 setShowArchiveDialog(true);
               }}
             >
-              <XIcon className="size-4.5" strokeWidth={2.5} />
+              <Trash2 className="size-4.5" strokeWidth={2} />
             </div>
             </>
           ) : (
@@ -473,9 +473,9 @@ export function BudgetCategory({
           <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2">
             <div
               onClick={() => setShowArchiveDialog(false)}
-              className="p-1.5 mr-2 text-muted-foreground bg-muted hover:text-white hover:bg-primary rounded-full transition-all cursor-pointer"
+              className="p-1.5 mr-2 text-red-600 bg-muted hover:text-white hover:bg-red-600 rounded-full transition-all cursor-pointer"
             >
-              <Undo className="size-7" strokeWidth={2.5} />
+              <XIcon className="size-7" strokeWidth={2.75} />
             </div>
             <div
               onClick={handleArchiveCategory}

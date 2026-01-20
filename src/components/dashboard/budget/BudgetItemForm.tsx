@@ -2,7 +2,7 @@
 
 import { UpdateItemDraft, CreateItemDraft } from "@/components/dashboard/budget/BudgetCategory";
 import { Input } from "@/components/ui/input";
-import { Calendar, X, Plus } from "lucide-react";
+import { Calendar, Trash2, Plus } from "lucide-react";
 import { budgetTypeSchema } from "@/db/schema";
 import { z } from "zod";
 
@@ -84,7 +84,7 @@ export function BudgetItemForm({
                 className="p-1.25 text-red-600 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer flex-shrink-0"
                 aria-label="Archive item"
               >
-                <X className="size-4.5" strokeWidth={2.5} />
+                <Trash2 className="size-4.5" strokeWidth={2} />
               </button>
             )
           )}
