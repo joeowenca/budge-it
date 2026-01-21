@@ -117,6 +117,9 @@ export function BudgetCategory({
   ): boolean {
     const normalized = normalizeItemForCompare(original);
 
+    const getDateRes = (d: Date | string | undefined | null) => 
+      d ? new Date(d).getTime() : 0;
+
     return (
       normalized.name !== edited.name ||
       normalized.amount !== edited.amount ||
@@ -126,6 +129,7 @@ export function BudgetCategory({
       normalized.dayOfMonthIsLast !== edited.dayOfMonthIsLast ||
       normalized.secondDayOfMonth !== edited.secondDayOfMonth ||
       normalized.secondDayOfMonthIsLast !== edited.secondDayOfMonthIsLast ||
+      getDateRes(normalized.startDate) !== getDateRes(edited.startDate) ||
       edited.isArchived === true
     );
   }
@@ -223,6 +227,13 @@ export function BudgetCategory({
         name: item.name || undefined,
         amount: isNaN(amountInCents) ? 0 : amountInCents,
         isArchived: item.isArchived,
+        frequency: item.frequency,
+        startDate: item.startDate ? new Date(item.startDate) : undefined, 
+        dayOfWeek: item.dayOfWeek,
+        dayOfMonth: item.dayOfMonth,
+        dayOfMonthIsLast: item.dayOfMonthIsLast,
+        secondDayOfMonth: item.secondDayOfMonth,
+        secondDayOfMonthIsLast: item.secondDayOfMonthIsLast,
       };
     });
 
@@ -320,6 +331,25 @@ export function BudgetCategory({
 
   const handleRemoveNewItem = (tempId: number) => {
     setNewItems((prev) => prev.filter((item) => item.tempId !== tempId));
+  };
+
+  const handleItemFrequencyChange = (itemId: number, data: any) => {
+    setItemEditValues((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], ...data },
+    }));
+  };
+
+  const handleNewListItemFrequencyChange = (tempId: number, data: any) => {
+    setNewItems((prev) =>
+      prev.map((item) =>
+        item.tempId === tempId ? { ...item, ...data } : item
+      )
+    );
+  };
+
+  const handleNewInputFrequencyChange = (data: any) => {
+    setNewItem((prev) => ({ ...prev, ...data }));
   };
 
   const handleArchiveCategory = async () => {
@@ -441,6 +471,7 @@ export function BudgetCategory({
                       onNameChange={(value) => handleItemNameChange(item.id, value)}
                       onAmountChange={(value) => handleItemAmountChange(item.id, value)}
                       onArchive={() => handleItemArchive(item.id)}
+                      onFrequencyChange={(data) => handleItemFrequencyChange(item.id, data)}
                     />
                   );
                 }
@@ -473,6 +504,7 @@ export function BudgetCategory({
                     }
                   }}
                   onArchive={() => handleRemoveNewItem(newItem.tempId)}
+                  onFrequencyChange={(data) => handleNewListItemFrequencyChange(newItem.tempId, data)}
                 />
               ))}
               {isEditing && (
@@ -483,6 +515,7 @@ export function BudgetCategory({
                   onAmountChange={handleNewItemAmountChange}
                   type={category.type}
                   onAdd={handleCreateNewItem}
+                  onFrequencyChange={handleNewInputFrequencyChange}
                 />
               )}
             </div>

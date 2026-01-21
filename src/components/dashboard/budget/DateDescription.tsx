@@ -33,7 +33,7 @@ export function DateDescription({ item }: DateDescriptionProps) {
         <>
           {getOrdinal(item.dayOfMonth)} &
           {item.secondDayOfMonthIsLast
-            ? ` ${getLastDayOfMonth(new Date())}`
+            ? ` ${getOrdinal(getLastDayOfMonth(new Date()))}`
             : item.secondDayOfMonth
             ? <> {getOrdinal(item.secondDayOfMonth)}</>
             : ""}

@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db";
-import { budgetCategories, budgetItems, getBudgetCategoriesFilterSchema, getBudgetItemsFilterSchema, createBudgetCategorySchema, createBudgetItemSchema, updateBudgetCategorySchema, updateBudgetItemSchema } from "@/db/schema";
+import { budgetCategories, budgetItems, getBudgetCategoriesFilterSchema, getBudgetItemsFilterSchema, createBudgetCategorySchema, createBudgetItemSchema, updateBudgetCategorySchema, updateBudgetItemSchema, frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
 import { checkUser } from "@/lib/checkUser";
-import { eq, and } from "drizzle-orm";
+import { eq, and, InferInsertModel } from "drizzle-orm";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
@@ -445,96 +445,70 @@ export async function batchUpdateBudgetItems(
   dataArray: z.infer<typeof updateBudgetItemSchema>[]
 ): Promise<ActionResult> {
   try {
-    // Check authentication
     const user = await checkUser();
-    if (!user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    if (!user) return { success: false, error: "Unauthorized" };
 
-    // Validate input array
     const validationResult = z.array(updateBudgetItemSchema).safeParse(dataArray);
     if (!validationResult.success) {
-      return {
-        success: false,
-        error: validationResult.error.issues[0]?.message || "Invalid input",
-      };
+      return { success: false, error: validationResult.error.issues[0]?.message };
     }
 
     const validatedDataArray = validationResult.data;
 
-    // Use transaction to update all items
+    // 1. Derive the type directly from the DB schema
+    type BudgetItemsUpdate = Partial<InferInsertModel<typeof budgetItems>>;
+
     const updatedItems = await db.transaction(async (tx) => {
       const results = [];
 
-      for (const validatedData of validatedDataArray) {
-        // Verify that the budget item exists and belongs to the user
-        const item = await tx.query.budgetItems.findFirst({
+      for (const itemData of validatedDataArray) {
+        // Check ownership
+        const existingItem = await tx.query.budgetItems.findFirst({
           where: and(
-            eq(budgetItems.id, validatedData.id),
+            eq(budgetItems.id, itemData.id),
             eq(budgetItems.userId, user.id)
           ),
         });
 
-        if (!item) {
-          throw new Error(`Budget item with id ${validatedData.id} not found`);
+        if (!existingItem) {
+          throw new Error(`Budget item ${itemData.id} not found`);
         }
 
-        // Build update object with only provided fields
-        const updateData: {
-          name?: string;
-          amount?: number;
-          sortOrder?: number;
-          isArchived?: boolean;
-          archivedAt?: Date | null;
-          updatedAt?: Date;
-        } = {};
+        // 2. Separate ID from the rest of the fields
+        const { id, ...fieldsToUpdate } = itemData;
 
-        if (validatedData.name !== undefined) {
-          updateData.name = validatedData.name;
-        }
-        if (validatedData.amount !== undefined) {
-          updateData.amount = validatedData.amount;
-        }
-        if (validatedData.sortOrder !== undefined) {
-          updateData.sortOrder = validatedData.sortOrder;
-        }
-        if (validatedData.isArchived !== undefined) {
-          updateData.isArchived = validatedData.isArchived;
-          // Set archivedAt when archiving, clear when unarchiving
-          updateData.archivedAt = validatedData.isArchived ? new Date() : null;
-        }
-        // Always update the updatedAt timestamp
-        updateData.updatedAt = new Date();
+        // 3. Construct the update object dynamically
+        // Spreading `fieldsToUpdate` automatically includes frequency, startDate, etc.
+        const updateData: BudgetItemsUpdate = {
+          ...fieldsToUpdate,
+          updatedAt: new Date(),
+        };
 
-        // Update the item
-        const updatedItemResult = await tx
+        // 4. Handle your special logic for archiving
+        if (fieldsToUpdate.isArchived !== undefined) {
+          updateData.archivedAt = fieldsToUpdate.isArchived ? new Date() : null;
+        }
+
+        const [updatedItem] = await tx
           .update(budgetItems)
           .set(updateData)
           .where(and(
-            eq(budgetItems.id, validatedData.id),
+            eq(budgetItems.id, id),
             eq(budgetItems.userId, user.id)
           ))
           .returning();
 
-        if (updatedItemResult.length === 0) {
-          throw new Error(`Budget item with id ${validatedData.id} not found or unauthorized`);
-        }
-
-        results.push(updatedItemResult[0]);
+        results.push(updatedItem);
       }
-
       return results;
     });
 
     revalidatePath("/");
-
     return { success: true, data: updatedItems };
+
   } catch (error) {
     console.error("Error batch updating budget items:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to batch update budget items",
-    };
+    return { success: false, error: "Failed to update items" };
   }
 }
 

@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +10,6 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DayOfMonthPicker } from "@/components/dashboard/budget/DayOfMonthPicker";
 import {
-  createBudgetItemSchema,
   dayOfWeekTypeSchema,
   frequencyTypeSchema,
   type CreateBudgetItemType,
@@ -106,12 +104,12 @@ const frequencyDialogSchema = z
         !data.secondDayOfMonthIsLast &&
         data.dayOfMonth != null &&
         data.secondDayOfMonth != null &&
-        data.secondDayOfMonth < data.dayOfMonth
+        data.secondDayOfMonth <= data.dayOfMonth
       ) {
         ctx.addIssue({
           code: "custom",
           path: ["secondDayOfMonth"],
-          message: "Second payment day cannot be earlier than the first",
+          message: "Second payment day must be after the first",
         });
       }
     }

@@ -76,7 +76,7 @@ export const createBudgetItemSchema = z
     dayOfMonthIsLast: z.boolean().default(false),
 
     secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
-    secondDayOfMonthIsLast: z.boolean().nullable().default(false),
+    secondDayOfMonthIsLast: z.boolean().default(false),
 
     sortOrder: z.number(),
     isArchived: z.boolean().default(false)
@@ -130,12 +130,12 @@ export const createBudgetItemSchema = z
         !data.secondDayOfMonthIsLast &&
         data.dayOfMonth != null &&
         data.secondDayOfMonth != null &&
-        data.secondDayOfMonth < data.dayOfMonth
+        data.secondDayOfMonth <= data.dayOfMonth
       ) {
         ctx.addIssue({
           code: "custom",
           path: ["secondDayOfMonth"],
-          message: "Second payment day cannot be earlier than the first",
+          message: "Second payment day must be after the first",
         });
       }
     }
@@ -167,6 +167,13 @@ export const updateBudgetItemSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().min(1, "Name is required").optional(),
   amount: z.number().int().optional(),
+  frequency: frequencyTypeSchema.optional(),
+  startDate: z.date().optional(), 
+  dayOfWeek: dayOfWeekTypeSchema.nullable().optional(),
+  dayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+  dayOfMonthIsLast: z.boolean().optional(),
+  secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+  secondDayOfMonthIsLast: z.boolean().optional(),
   sortOrder: z.number().optional(),
   isArchived: z.boolean().optional(),
 });
@@ -191,7 +198,7 @@ export const budgetCategories = pgTable("budget_categories", {
   name: text("name").notNull(),
   color: text("color"),
   sortOrder: doublePrecision("sort_order").notNull().default(0),
-  isArchived: boolean("is_archived").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
@@ -212,7 +219,7 @@ export const budgetItems = pgTable("budget_items", {
   secondDayOfMonth: integer("second_day_of_month"),
   secondDayOfMonthIsLast: boolean("second_day_of_month_is_last").notNull().default(false),
   sortOrder: doublePrecision("sort_order").notNull().default(0),
-  isArchived: boolean("is_archived").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
@@ -227,7 +234,7 @@ export const spendingAccounts = pgTable("spending_accounts", {
   balance: integer("balance").notNull().default(0),
   sortOrder: doublePrecision("sort_order").notNull(),
   pinOrder: doublePrecision("pin_order").notNull().default(0),
-  isArchived: boolean("is_archived").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
@@ -240,7 +247,7 @@ export const spendingCategories = pgTable("spending_categories", {
   name: text("name").notNull(),
   color: text("color"),
   sortOrder: doublePrecision("sort_order").notNull().default(0),
-  isArchived: boolean("is_archived").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
@@ -255,7 +262,7 @@ export const spendingTransactions = pgTable("spending_transactions", {
   amount: integer("amount").notNull().default(0),
   memo: text("memo"),
   date: timestamp("date"),
-  isArchived: boolean("is_archived").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
@@ -274,7 +281,7 @@ export const spendingTopUps = pgTable("spending_top_ups", {
   dayOfMonthIsLast: boolean("day_of_month_is_last").notNull().default(false),
   secondDayOfMonth: integer("second_day_of_month"),
   secondDayOfMonthIsLast: boolean("second_day_of_month_is_last").notNull().default(false),
-  isArchived: boolean("is_archived").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow()
@@ -286,8 +293,8 @@ export const spendingTopUpOccurrences = pgTable("spending_top_up_occurences", {
   spendingTopUpId: integer("spending_top_up_id").references(() => spendingTopUps.id, { onDelete: "cascade" }).notNull(),
   date: timestamp("date").notNull(),
   amount: integer("amount").notNull().default(0),
-  isArchived: boolean("is_archived").default(false),
-  isExecuted: boolean("is_executed").default(false),
+  isArchived: boolean("is_archived").notNull().default(false),
+  isExecuted: boolean("is_executed").notNull().default(false),
   archivedAt: timestamp("archived_at"),
   executedAt: timestamp("executed_at"),
   createdAt: timestamp("created_at").defaultNow()
