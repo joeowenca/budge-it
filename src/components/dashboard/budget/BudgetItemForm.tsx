@@ -17,6 +17,7 @@ interface BudgetItemFormProps {
   type?: z.infer<typeof budgetTypeSchema>; // For "add" mode
   onAdd?: () => void;
   onFrequencyChange?: (data: any) => void;
+  isFrequencyModified?: boolean;
 }
 
 export function BudgetItemForm({
@@ -28,6 +29,7 @@ export function BudgetItemForm({
   type,
   onAdd,
   onFrequencyChange,
+  isFrequencyModified
 }: BudgetItemFormProps) {
   const [isFrequencyDialogOpen, setIsFrequencyDialogOpen] = useState(false);
 
@@ -78,7 +80,7 @@ export function BudgetItemForm({
             className="font-medium max-w-48 h-7 px-2 text-sm border-1 focus-visible:ring-0"
           />
           <div 
-            className="p-1.25 hover:text-white hover:bg-primary bg-muted rounded-full cursor-pointer transition-all flex-shrink-0"
+            className={`p-1.25 hover:text-white hover:bg-primary bg-muted ${isFrequencyModified ? "text-primary" : "text-muted-foreground"} rounded-full cursor-pointer transition-all flex-shrink-0`}
             onClick={() => setIsFrequencyDialogOpen(true)}
           >
             <Calendar className="size-4.5" strokeWidth={2} />

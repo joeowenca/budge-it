@@ -62,6 +62,9 @@ export function BudgetCategory({
       return a.id - b.id;
     });
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const defaultItem: CreateItemDraft = {
     tempId: tempIdCounter--,
     budgetCategoryId: category.id,
@@ -74,7 +77,7 @@ export function BudgetCategory({
     dayOfMonthIsLast: false,
     secondDayOfMonth: null,
     secondDayOfMonthIsLast: false,
-    startDate: new Date(),
+    startDate: today,
     isArchived: false,
     sortOrder: 0,
   }
@@ -145,6 +148,24 @@ export function BudgetCategory({
   const hasAnyEdits = hasItemEdits || hasNewItems;
 
   const canUndo = itemsInDB.length > 0 && hasAnyEdits;
+
+  const getDateRes = (d: Date | string | undefined | null) => 
+    d ? new Date(d).getTime() : 0;
+
+  function isFrequencyModified(
+    original: CreateItemDraft | ReadBudgetItemType, 
+    draft: CreateItemDraft | UpdateItemDraft
+  ): boolean {
+    return (
+      original.frequency !== draft.frequency ||
+      original.dayOfWeek !== draft.dayOfWeek ||
+      original.dayOfMonth !== draft.dayOfMonth ||
+      original.dayOfMonthIsLast !== draft.dayOfMonthIsLast ||
+      original.secondDayOfMonth !== draft.secondDayOfMonth ||
+      original.secondDayOfMonthIsLast !== draft.secondDayOfMonthIsLast ||
+      getDateRes(original.startDate) !== getDateRes(draft.startDate)
+    );
+  }
 
   function toCents(amount: number | string): number {
     return typeof amount === "string"
@@ -472,6 +493,7 @@ export function BudgetCategory({
                       onAmountChange={(value) => handleItemAmountChange(item.id, value)}
                       onArchive={() => handleItemArchive(item.id)}
                       onFrequencyChange={(data) => handleItemFrequencyChange(item.id, data)}
+                      isFrequencyModified={isFrequencyModified(item, editItem)}
                     />
                   );
                 }
@@ -505,6 +527,7 @@ export function BudgetCategory({
                   }}
                   onArchive={() => handleRemoveNewItem(newItem.tempId)}
                   onFrequencyChange={(data) => handleNewListItemFrequencyChange(newItem.tempId, data)}
+                  isFrequencyModified={isFrequencyModified(defaultItem, newItem)}
                 />
               ))}
               {isEditing && (
@@ -516,6 +539,7 @@ export function BudgetCategory({
                   type={category.type}
                   onAdd={handleCreateNewItem}
                   onFrequencyChange={handleNewInputFrequencyChange}
+                  isFrequencyModified={isFrequencyModified(defaultItem, newItem)}
                 />
               )}
             </div>
