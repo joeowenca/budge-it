@@ -489,6 +489,7 @@ export function BudgetCategory({
                       key={item.id}
                       action="edit"
                       budgetItem={editItem}
+                      type={category.type}
                       onNameChange={(value) => handleItemNameChange(item.id, value)}
                       onAmountChange={(value) => handleItemAmountChange(item.id, value)}
                       onArchive={() => handleItemArchive(item.id)}
@@ -509,6 +510,7 @@ export function BudgetCategory({
                   key={newItem.tempId}
                   action="edit"
                   budgetItem={newItem}
+                  type={category.type}
                   onNameChange={(value) => {
                     setNewItems((prev) =>
                       prev.map((item) =>

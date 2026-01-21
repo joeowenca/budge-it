@@ -48,3 +48,8 @@ export function getOrdinal(n: number): string {
 export function getLastDayOfMonth(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
+
+export function capitalizeFirstLetter(str: string): string {
+  const first = str.at(0);
+  return first ? first.toUpperCase() + str.slice(1) : str;
+}

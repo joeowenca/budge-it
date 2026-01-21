@@ -7,6 +7,7 @@ import { Calendar, Trash2, Plus } from "lucide-react";
 import { budgetTypeSchema } from "@/db/schema";
 import { z } from "zod";
 import { FrequencyDialog } from "./FrequencyDialog";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 interface BudgetItemFormProps {
   action: "edit" | "add";
@@ -65,7 +66,7 @@ export function BudgetItemForm({
   };
 
   const isAddMode = action === "add";
-  const namePlaceholder = isAddMode ? `Add ${type}` : `${type} name`;
+  const namePlaceholder = isAddMode ? `Add ${type}` : `${type ? capitalizeFirstLetter(type): "Item"} name`;
   const amountPlaceholder = "0.00"
 
   return (

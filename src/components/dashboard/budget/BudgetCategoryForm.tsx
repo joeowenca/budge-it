@@ -185,7 +185,7 @@ export function BudgetCategoryForm({
                 {/* Cancel Button */}
                 <div
                     onClick={closeForm}
-                    className="rounded-full cursor-pointer text-red-600 bg-muted hover:text-white hover:bg-red-600 p-1.25 transition-all"
+                    className="rounded-full cursor-pointer text-red-600 bg-muted hover:text-white hover:bg-red-500 p-1.25 transition-all"
                 >
                     <X className="size-4.5" strokeWidth={2.5} />
                 </div>

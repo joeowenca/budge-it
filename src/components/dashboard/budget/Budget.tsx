@@ -1,5 +1,4 @@
 import BudgetSection from "./BudgetSection";
-import { AddToBudgetDialogButton } from "./AddToBudgetDialogButton";
 import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
 
 type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
@@ -89,7 +88,6 @@ export default async function Budget() {
       <div className="flex-none">
         <div className="flex items-center justify-between p-5">
           <h2 className="text-3xl font-bold">Budget</h2>
-          <AddToBudgetDialogButton />
         </div>
       </div>
 
