@@ -121,8 +121,8 @@ export function BudgetCategoryForm({
                     <Button
                         type="button"
                         variant="outline"
-                        size="icon-sm"
-                        className={`text-lg ${showEmojiPicker && "border-primary bg-muted"}`}
+                        size="icon"
+                        className={`text-xl ${showEmojiPicker && "border-primary bg-muted"}`}
                     >
                         {newCategory.emoji}
                     </Button>
@@ -176,7 +176,7 @@ export function BudgetCategoryForm({
                         closeForm();
                     }
                 }}
-                className={`font-semibold h-8 pl-2 ${isEditing && "w-36 py-0"} ${errorMessage ? "border-red-500 focus-visible:ring-red-500 pr-8" : ""}`}
+                className={`font-semibold h-9 pl-2 ${isEditing && "w-36 py-0"} ${errorMessage ? "border-red-500 focus-visible:ring-red-500 pr-8" : ""}`}
                 autoFocus
             />
 

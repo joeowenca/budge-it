@@ -88,7 +88,7 @@ export default async function Budget() {
     <div className="h-full flex flex-col">
       <div className="flex-none">
         <div className="flex items-center justify-between p-5">
-          <h2 className="text-3xl font-black">Budget</h2>
+          <h2 className="text-3xl font-bold">Budget</h2>
           <AddToBudgetDialogButton />
         </div>
       </div>

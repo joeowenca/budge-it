@@ -343,9 +343,9 @@ export function BudgetCategory({
   }
 
   return (
-    <div className="space-y-2 p-4 rounded-lg shadow-[0px_0px_10px_rgba(0,0,0,0.12)] transition-colors">
+    <div className="space-y-2 p-4 rounded-lg border-1 border-muted shadow-[0px_0px_10px_rgba(0,0,0,0.05)] transition-colors">
       {/* Category Header - Clickable */}
-      <div className={`flex items-center justify-between m-0 ${isExpanded && !isEditing ? "h-8" : ""}`}>
+      <div className="flex items-center justify-between m-0 h-7">
         <div 
           className={`flex items-center gap-2 pr-2 transition-all relative ${!isEditing && "hover:text-primary"} ${isEditing ? "cursor-default" : "cursor-pointer"} select-none`}
           onClick={toggleIsExpanded}
@@ -390,7 +390,7 @@ export function BudgetCategory({
               className={`p-1.5 bg-muted rounded-full transition-all ${isEmpty ? "text-muted-foreground cursor-not-allowed opacity-50" : "hover:text-white hover:bg-primary cursor-pointer"} absolute right-0`}
               aria-label="Edit category"
             >
-              <Pencil className="size-4" strokeWidth={2.5} />
+              <Pencil className="size-4" strokeWidth={2.25} />
             </button>
           )}
           {isEditing && (
@@ -417,7 +417,7 @@ export function BudgetCategory({
               </button>
             </div>
           )}
-          <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} className={`${isExpanded && "invisible"}`} />
+          <AmountPill amount={convertAmountToCurrency(totalAmount)} color={titleColors[title]} className={`${isExpanded && "hidden"}`} />
         </div>
       </div>
 
@@ -425,7 +425,7 @@ export function BudgetCategory({
       {isExpanded && (
         <>
           {(isExpanded || isEditing) && (
-            <div className="space-y-1 mt-1">
+            <div className="space-y-1 mt-3">
               {itemsInDB.map((item) => {
                 if (isEditing) {
                   const editItem = itemEditValues[item.id];
