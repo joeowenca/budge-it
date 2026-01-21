@@ -47,15 +47,75 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const frequencyDialogSchema = createBudgetItemSchema.pick({
-  frequency: true,
-  startDate: true,
-  dayOfWeek: true,
-  dayOfMonth: true,
-  dayOfMonthIsLast: true,
-  secondDayOfMonth: true,
-  secondDayOfMonthIsLast: true,
-});
+const frequencyDialogSchema = z
+  .object({
+    frequency: frequencyTypeSchema,
+    startDate: z.date(),
+    dayOfWeek: dayOfWeekTypeSchema.nullable().optional(),
+    dayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+    dayOfMonthIsLast: z.boolean().default(false),
+    secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
+    secondDayOfMonthIsLast: z.boolean().nullable().default(false),
+  })
+  .superRefine((data, ctx) => {
+    const F = frequencyTypeSchema.enum;
+
+    /* Weekly / Bi-weekly */
+    if (data.frequency === F.weekly || data.frequency === F["bi-weekly"]) {
+      if (!data.dayOfWeek) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayOfWeek"],
+          message: "Day of the week is required for this frequency",
+        });
+      }
+    }
+
+    /* Monthly */
+    if (data.frequency === F.monthly) {
+      if (!data.dayOfMonthIsLast && data.dayOfMonth == null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayOfMonth"],
+          message: "Day of the month is required unless using last day",
+        });
+      }
+    }
+
+    /* Semi-monthly */
+    if (data.frequency === F["semi-monthly"]) {
+      if (!data.dayOfMonthIsLast && data.dayOfMonth == null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayOfMonth"],
+          message: "First payment day is required",
+        });
+      }
+
+      if (!data.secondDayOfMonthIsLast && data.secondDayOfMonth == null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["secondDayOfMonth"],
+          message: "Second payment day is required",
+        });
+      }
+
+      // Ordering rule
+      if (
+        !data.dayOfMonthIsLast &&
+        !data.secondDayOfMonthIsLast &&
+        data.dayOfMonth != null &&
+        data.secondDayOfMonth != null &&
+        data.secondDayOfMonth < data.dayOfMonth
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["secondDayOfMonth"],
+          message: "Second payment day cannot be earlier than the first",
+        });
+      }
+    }
+  });
 
 type FrequencyDialogFormValues = z.input<typeof frequencyDialogSchema>;
 type FrequencyDialogValues = z.output<typeof frequencyDialogSchema>;

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { UpdateItemDraft, CreateItemDraft } from "@/components/dashboard/budget/BudgetCategory";
 import { Input } from "@/components/ui/input";
 import { Calendar, Trash2, Plus } from "lucide-react";
 import { budgetTypeSchema } from "@/db/schema";
 import { z } from "zod";
+import { FrequencyDialog } from "./FrequencyDialog";
 
 interface BudgetItemFormProps {
   action: "edit" | "add";
@@ -14,6 +16,7 @@ interface BudgetItemFormProps {
   onArchive?: () => void;
   type?: z.infer<typeof budgetTypeSchema>; // For "add" mode
   onAdd?: () => void;
+  onFrequencyChange?: (data: any) => void;
 }
 
 export function BudgetItemForm({
@@ -24,7 +27,10 @@ export function BudgetItemForm({
   onArchive,
   type,
   onAdd,
+  onFrequencyChange,
 }: BudgetItemFormProps) {
+  const [isFrequencyDialogOpen, setIsFrequencyDialogOpen] = useState(false);
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Allow empty string, numbers, and decimals (including trailing dots)
@@ -38,6 +44,22 @@ export function BudgetItemForm({
       return;
     }
     onAdd?.();
+  };
+
+  const handleFrequencyChange = (data: any) => {
+    onFrequencyChange?.(data);
+    setIsFrequencyDialogOpen(false);
+  };
+
+  // Extract only frequency-related fields for the dialog
+  const frequencyDefaults = {
+    frequency: budgetItem.frequency,
+    startDate: budgetItem.startDate,
+    dayOfWeek: budgetItem.dayOfWeek,
+    dayOfMonth: budgetItem.dayOfMonth,
+    dayOfMonthIsLast: budgetItem.dayOfMonthIsLast,
+    secondDayOfMonth: budgetItem.secondDayOfMonth,
+    secondDayOfMonthIsLast: budgetItem.secondDayOfMonthIsLast,
   };
 
   const isAddMode = action === "add";
@@ -55,7 +77,10 @@ export function BudgetItemForm({
             placeholder={namePlaceholder}
             className="font-medium max-w-48 h-7 px-2 text-sm border-1 focus-visible:ring-0"
           />
-          <div className="p-1.25 hover:text-white hover:bg-primary bg-muted rounded-full cursor-pointer transition-all flex-shrink-0">
+          <div 
+            className="p-1.25 hover:text-white hover:bg-primary bg-muted rounded-full cursor-pointer transition-all flex-shrink-0"
+            onClick={() => setIsFrequencyDialogOpen(true)}
+          >
             <Calendar className="size-4.5" strokeWidth={2} />
           </div>
         </div>
@@ -92,6 +117,12 @@ export function BudgetItemForm({
           )}
         </div>
       </div>
+      <FrequencyDialog
+        open={isFrequencyDialogOpen}
+        onOpenChange={setIsFrequencyDialogOpen}
+        defaultValues={frequencyDefaults}
+        onSave={handleFrequencyChange}
+      />
     </div>
   );
 }
