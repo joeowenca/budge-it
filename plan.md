@@ -180,7 +180,7 @@
         - Create an '+ Add Category' button that lives by default within each BudgetSection. This button will display below the category list within the BudgetSection component. 
         - Clicking the button will replace the button with 3 fields: emoji, category name, and an add button
         - Filling out the form and adding the category will by default set the category's type based on the section it was added under. For example, if you add a category within the 'Savings' section, the category type will be set to 'savings'.
-    - [ ] **Step 5.7.4** Budget Item Form component
+    - [x] **Step 5.7.4** Budget Item Form component
         - A component that replaces all BudgetItem components within the BudgetCategory component when the BudgetCategory's isEditing state is true. 
         - This component will be a form with the following fields:
             - Name (text)
@@ -190,3 +190,40 @@
         - All fields will display in-line and should use the same styling as the BudgetItem component. This way, when BudgetCategory's 'isEditing' state is true, the BudgetItemForm components seamlessly replace the BudgetItem components and allow the user to edit their values.
         - When the component renders, the default values for the Name and Amount fields should be the existing values for that budget item from the database. 
         - Submitting the form when addMode is false will utilize the `updateBudgetItem` server action in `budgetActions.ts`. 
+    - [x] **Step 5.7.5** Frequency Diaglog UI component
+        - [x] **Props:** `open`, `onOpenChange`, `defaultValues`, `onSave`.
+        - [x] **Dependencies:** Import existing `DayOfMonthPicker` component.
+        - [x] **Form Logic:**
+            - [x] **Frequency:** `shadcn` Select.
+            - [x] **Start Date:** `shadcn` DatePicker.
+            - [x] **Reset Logic:** When Frequency changes, clear/reset values for fields hidden by the new selection (e.g., clear `dayOfWeek` if switching to Monthly, and so on).
+        - [x] **Conditional Inputs:**
+            - [x] **Weekly/Bi-Weekly:** `shadcn` Select for "Day of Week".
+            - [x] **Monthly:**
+                - Render one `<DayOfMonthPicker />`.
+                - Wire it to update `dayOfMonth` AND `dayOfMonthIsLast`.
+            - [x] **Semi-Monthly:**
+                - Render **two** `<DayOfMonthPicker />` components (Payment 1, Payment 2).
+                - Wire first to `dayOfMonth` / `dayOfMonthIsLast`.
+                - Wire second to `secondDayOfMonth` / `secondDayOfMonthIsLast`.
+        - [x] **Integration** 
+            - Pass item data in, validate with Zod schema, pass data out via `onSave`.
+    - [ ] **Step 5.7.6** Integrate FrequencyDialog into BudgetItemForm
+        - [ ] Update `BudgetItemForm` props to include `onFrequencyChange: (updates: Partial<z.infer<typeof createBudgetItemSchema>>) => void`.
+        - [ ] Add local state `isDialogOpen` to control visibility.
+        - [ ] Add `onClick` handler to the Calendar icon wrapper to open dialog.
+        - [ ] Create `handleFrequencyChange` function:
+            - Receives data from `FrequencyDialog`'s `onSave`.
+            - Calls the `onFrequencyChange` prop to update the parent draft.
+            - Closes the dialog.
+        - [ ] Render `<FrequencyDialog />` at the bottom of the component.
+    - [ ] **Step 5.7.7** Integrate Frequency Logic into BudgetCategory
+        - [ ] Open `BudgetCategory.tsx`.
+        - [ ] **Create Handlers:**
+            - `handleItemFrequencyChange(itemId, data)`: Updates `itemEditValues`.
+            - `handleNewListItemFrequencyChange(tempId, data)`: Updates a specific item in the `newItems` array.
+            - `handleNewInputFrequencyChange(data)`: Updates the `newItem` state (the add row).
+        - [ ] **Update JSX:**
+            - Pass `onFrequencyChange` to the existing items' `BudgetItemForm`.
+            - Pass `onFrequencyChange` to the `newItems` loop `BudgetItemForm`.
+            - Pass `onFrequencyChange` to the "Add" mode `BudgetItemForm`.
