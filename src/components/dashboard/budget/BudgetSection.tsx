@@ -32,7 +32,7 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
       <div className="flex items-center w-full px-1 py-2">
         <h3 className="text-xl flex-1 font-medium">{title}</h3>
       </div>
-      <div className="space-y-4 mb-2">
+      <div className="space-y-4 mb-4">
         {categories.filter((category) => !category.isArchived).length === 0 ? (
           <p className="text-sm text-muted-foreground">No categories yet</p>
         ) : (
