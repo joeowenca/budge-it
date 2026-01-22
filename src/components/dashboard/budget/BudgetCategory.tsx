@@ -62,6 +62,9 @@ export function BudgetCategory({
       return a.id - b.id;
     });
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const defaultItem: CreateItemDraft = {
     tempId: tempIdCounter--,
     budgetCategoryId: category.id,
@@ -74,7 +77,7 @@ export function BudgetCategory({
     dayOfMonthIsLast: false,
     secondDayOfMonth: null,
     secondDayOfMonthIsLast: false,
-    startDate: new Date(),
+    startDate: today,
     isArchived: false,
     sortOrder: 0,
   }
@@ -117,6 +120,9 @@ export function BudgetCategory({
   ): boolean {
     const normalized = normalizeItemForCompare(original);
 
+    const getDateRes = (d: Date | string | undefined | null) => 
+      d ? new Date(d).getTime() : 0;
+
     return (
       normalized.name !== edited.name ||
       normalized.amount !== edited.amount ||
@@ -126,6 +132,7 @@ export function BudgetCategory({
       normalized.dayOfMonthIsLast !== edited.dayOfMonthIsLast ||
       normalized.secondDayOfMonth !== edited.secondDayOfMonth ||
       normalized.secondDayOfMonthIsLast !== edited.secondDayOfMonthIsLast ||
+      getDateRes(normalized.startDate) !== getDateRes(edited.startDate) ||
       edited.isArchived === true
     );
   }
@@ -141,6 +148,24 @@ export function BudgetCategory({
   const hasAnyEdits = hasItemEdits || hasNewItems;
 
   const canUndo = itemsInDB.length > 0 && hasAnyEdits;
+
+  const getDateRes = (d: Date | string | undefined | null) => 
+    d ? new Date(d).getTime() : 0;
+
+  function isFrequencyModified(
+    original: CreateItemDraft | ReadBudgetItemType, 
+    draft: CreateItemDraft | UpdateItemDraft
+  ): boolean {
+    return (
+      original.frequency !== draft.frequency ||
+      original.dayOfWeek !== draft.dayOfWeek ||
+      original.dayOfMonth !== draft.dayOfMonth ||
+      original.dayOfMonthIsLast !== draft.dayOfMonthIsLast ||
+      original.secondDayOfMonth !== draft.secondDayOfMonth ||
+      original.secondDayOfMonthIsLast !== draft.secondDayOfMonthIsLast ||
+      getDateRes(original.startDate) !== getDateRes(draft.startDate)
+    );
+  }
 
   function toCents(amount: number | string): number {
     return typeof amount === "string"
@@ -223,6 +248,13 @@ export function BudgetCategory({
         name: item.name || undefined,
         amount: isNaN(amountInCents) ? 0 : amountInCents,
         isArchived: item.isArchived,
+        frequency: item.frequency,
+        startDate: item.startDate ? new Date(item.startDate) : undefined, 
+        dayOfWeek: item.dayOfWeek,
+        dayOfMonth: item.dayOfMonth,
+        dayOfMonthIsLast: item.dayOfMonthIsLast,
+        secondDayOfMonth: item.secondDayOfMonth,
+        secondDayOfMonthIsLast: item.secondDayOfMonthIsLast,
       };
     });
 
@@ -322,6 +354,25 @@ export function BudgetCategory({
     setNewItems((prev) => prev.filter((item) => item.tempId !== tempId));
   };
 
+  const handleItemFrequencyChange = (itemId: number, data: any) => {
+    setItemEditValues((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], ...data },
+    }));
+  };
+
+  const handleNewListItemFrequencyChange = (tempId: number, data: any) => {
+    setNewItems((prev) =>
+      prev.map((item) =>
+        item.tempId === tempId ? { ...item, ...data } : item
+      )
+    );
+  };
+
+  const handleNewInputFrequencyChange = (data: any) => {
+    setNewItem((prev) => ({ ...prev, ...data }));
+  };
+
   const handleArchiveCategory = async () => {
     const result = await updateBudgetCategory({
       id: category.id,
@@ -343,7 +394,7 @@ export function BudgetCategory({
   }
 
   return (
-    <div className="space-y-2 p-4 rounded-lg border-1 border-muted shadow-[0px_0px_10px_rgba(0,0,0,0.05)] transition-colors">
+    <div className="space-y-2 p-4 rounded-xl border-1 border-muted shadow-[0px_0px_10px_rgba(0,0,0,0.05)] transition-colors">
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0 h-7">
         <div 
@@ -438,9 +489,12 @@ export function BudgetCategory({
                       key={item.id}
                       action="edit"
                       budgetItem={editItem}
+                      type={category.type}
                       onNameChange={(value) => handleItemNameChange(item.id, value)}
                       onAmountChange={(value) => handleItemAmountChange(item.id, value)}
                       onArchive={() => handleItemArchive(item.id)}
+                      onFrequencyChange={(data) => handleItemFrequencyChange(item.id, data)}
+                      isFrequencyModified={isFrequencyModified(item, editItem)}
                     />
                   );
                 }
@@ -456,6 +510,7 @@ export function BudgetCategory({
                   key={newItem.tempId}
                   action="edit"
                   budgetItem={newItem}
+                  type={category.type}
                   onNameChange={(value) => {
                     setNewItems((prev) =>
                       prev.map((item) =>
@@ -473,6 +528,8 @@ export function BudgetCategory({
                     }
                   }}
                   onArchive={() => handleRemoveNewItem(newItem.tempId)}
+                  onFrequencyChange={(data) => handleNewListItemFrequencyChange(newItem.tempId, data)}
+                  isFrequencyModified={isFrequencyModified(defaultItem, newItem)}
                 />
               ))}
               {isEditing && (
@@ -483,6 +540,8 @@ export function BudgetCategory({
                   onAmountChange={handleNewItemAmountChange}
                   type={category.type}
                   onAdd={handleCreateNewItem}
+                  onFrequencyChange={handleNewInputFrequencyChange}
+                  isFrequencyModified={isFrequencyModified(defaultItem, newItem)}
                 />
               )}
             </div>
@@ -498,7 +557,7 @@ export function BudgetCategory({
       )}
 
       <Dialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
-        <DialogContent showCloseButton={false} className="sm:max-w-sm min-w-0 gap-2">
+        <DialogContent showCloseButton={false} className="sm:max-w-xs max-w-xs min-w-0 gap-2">
           <DialogHeader>
             <div className="flex justify-center">
               <div className="p-2 rounded-full bg-yellow-100">
@@ -512,10 +571,10 @@ export function BudgetCategory({
               archive all its <b>{category.type}{category.type.toString() === "expense" && "s"}</b>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2">
+          <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2 mt-2">
             <div
               onClick={() => setShowArchiveDialog(false)}
-              className="p-1.5 mr-2 text-red-600 bg-muted hover:text-white hover:bg-red-600 rounded-full transition-all cursor-pointer"
+              className="p-1.5 mr-2 text-red-500 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
             >
               <XIcon className="size-7" strokeWidth={2.75} />
             </div>

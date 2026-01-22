@@ -1,15 +1,18 @@
-import React from "react";
+"use client";
+
+import { useState } from "react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getOrdinal } from "@/lib/utils";
 
 interface DayOfMonthPickerProps {
-  value?: number; // 1-31
-  isLast?: boolean; // whether 'Last Day' is selected
+  value?: number;
+  isLast?: boolean;
+  isFirstPayment?: boolean;
   onChange: (day: number | undefined, isLast?: boolean) => void;
   disabled?: boolean;
 }
@@ -17,21 +20,26 @@ interface DayOfMonthPickerProps {
 export function DayOfMonthPicker({
   value,
   isLast,
+  isFirstPayment,
   onChange,
   disabled = false,
 }: DayOfMonthPickerProps) {
+  const [open, setOpen] = useState(false);
+
   const displayText = isLast
     ? "Last Day"
     : value
-    ? `Day ${value}`
+    ? `${getOrdinal(value)}`
     : "Select Day";
 
   const handleDayClick = (dayValue: number) => {
-    onChange(dayValue, false); // picking a day sets isLast = false
+    onChange(dayValue, false);
+    setOpen(false);
   };
 
   const handleLastClick = () => {
-    onChange(undefined, true); // last day selected
+    onChange(undefined, true);
+    setOpen(false);
   };
 
   const isSelected = (dayValue: number | "last") => {
@@ -40,19 +48,19 @@ export function DayOfMonthPicker({
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-start text-left font-normal"
+          className="w-full justify-start text-left font-normal h-10"
           disabled={disabled}
         >
           {displayText}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-4" align="start">
+      <PopoverContent className="w-auto p-4 rounded-2xl" align="center">
         <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+          {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
             <Button
               key={day}
               variant={isSelected(day) ? "default" : "outline"}
@@ -72,7 +80,8 @@ export function DayOfMonthPicker({
             size="sm"
             className={cn(
               "h-9 w-full col-span-7",
-              isSelected("last") && "bg-primary text-primary-foreground"
+              isSelected("last") && "bg-primary text-primary-foreground",
+              isFirstPayment && "hidden"
             )}
             onClick={handleLastClick}
           >

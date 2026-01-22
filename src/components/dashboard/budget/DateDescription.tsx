@@ -15,7 +15,7 @@ export function DateDescription({ item }: DateDescriptionProps) {
     }
 
   return (
-    <div className="flex text-xs font-semibold tracking-wide text-muted-foreground">
+    <div className="flex text-xs font-medium tracking-wide text-muted-foreground">
       <Calendar className="size-3.5 mt-0.25 mr-1" />
       {item.frequency === "weekly" && item.dayOfWeek && (
         <>
@@ -33,7 +33,7 @@ export function DateDescription({ item }: DateDescriptionProps) {
         <>
           {getOrdinal(item.dayOfMonth)} &
           {item.secondDayOfMonthIsLast
-            ? ` ${getLastDayOfMonth(new Date())}`
+            ? ` ${getOrdinal(getLastDayOfMonth(new Date()))}`
             : item.secondDayOfMonth
             ? <> {getOrdinal(item.secondDayOfMonth)}</>
             : ""}

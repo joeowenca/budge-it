@@ -31,12 +31,6 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
     <div className="space-y-2">
       <div className="flex items-center w-full px-1 py-2">
         <h3 className="text-xl flex-1 font-medium">{title}</h3>
-        <div
-          onClick={() => {toggleIsAdding()}}
-          className={`${isAdding && "hidden"} rounded-full bg-muted cursor-pointer hover:text-white hover:bg-primary transition-all p-1.25`}
-        >
-          <Plus className="size-4.5" strokeWidth={2.75} />
-      </div>
       </div>
       <div className="space-y-4 mb-4">
         {categories.filter((category) => !category.isArchived).length === 0 ? (
@@ -64,7 +58,15 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
             })
         )}
       </div>
-      {isAdding && (<BudgetCategoryForm budgetType={budgetType} action="add" onClose={(toggleIsAdding)} />)}
+      <div className="flex items-center h-9">
+        <div
+          onClick={() => {toggleIsAdding()}}
+          className={`${isAdding && "hidden"} ml-1 text-muted-foreground rounded-full bg-muted cursor-pointer hover:text-white hover:bg-primary transition-all p-1.25`}
+        >
+            <Plus className="size-4.5" strokeWidth={2.75} />
+        </div>
+        {isAdding && (<BudgetCategoryForm budgetType={budgetType} action="add" onClose={(toggleIsAdding)} />)}
+      </div>
     </div>
   );
 }

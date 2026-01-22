@@ -9,8 +9,8 @@ interface AmountPillProps {
 export function AmountPill({ amount, color, className }: AmountPillProps) {
     const colors: Record<string, string> = {
         blue: "text-primary bg-primary/10",
-        green: "text-green-700 bg-green-600/10",
-        red: "text-red-600 bg-red-600/10",
+        green: "text-green-700 bg-green-500/10",
+        red: "text-red-600 bg-red-500/10",
         yellow: "text-yellow-800 bg-yellow-500/15",
         gray: "text-gray-800 bg-gray-600/10"
     };

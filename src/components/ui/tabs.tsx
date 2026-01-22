@@ -28,10 +28,10 @@ const TabsTrigger = React.forwardRef<
 >(({ className, value, ...props }, ref) => {
   // Map tab values to colors
   const valueColorMap: Record<string, string> = {
-    income: "text-gray-600 hover:text-white hover:bg-primary data-[state=active]:bg-primary data-[state=active]:text-white shadow-primary/25",
-    expense: "text-gray-600 hover:text-white hover:bg-red-600 data-[state=active]:bg-red-600 data-[state=active]:text-white shadow-red-600/25",
-    savings: "text-gray-600 hover:text-white hover:bg-green-600 data-[state=active]:bg-green-600 data-[state=active]:text-white shadow-green-600/25",
-    default: "text-gray-600 hover:text-white hover:bg-primary data-[state=active]:bg-primary data-[state=active]:text-white shadow-primary/25",
+    income: "text-gray-600 hover:text-white hover:bg-primary data-[state=active]:bg-primary data-[state=active]:text-white",
+    expense: "text-gray-600 hover:text-white hover:bg-red-600 data-[state=active]:bg-red-600 data-[state=active]:text-white",
+    savings: "text-gray-600 hover:text-white hover:bg-green-600 data-[state=active]:bg-green-600 data-[state=active]:text-white",
+    default: "text-gray-600 hover:text-white hover:bg-primary data-[state=active]:bg-primary data-[state=active]:text-white",
   };
 
   // Pick the classes for this value, fallback to 'default'
@@ -42,7 +42,7 @@ const TabsTrigger = React.forwardRef<
       ref={ref}
       value={value}
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1 text-sm font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 mx-0.5 cursor-pointer hover:shadow-lg data-[state=active]:shadow-lg",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 mx-0.5 cursor-pointer",
         valueClasses,
         className
       )}
