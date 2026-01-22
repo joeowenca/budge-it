@@ -81,7 +81,7 @@ export function BudgetItemForm({
             className="font-medium max-w-48 h-7 px-2 text-sm border-1 focus-visible:ring-0"
           />
           <div 
-            className={`p-1.25 hover:text-white hover:bg-primary bg-muted ${isFrequencyModified ? "text-primary" : "text-muted-foreground"} rounded-full cursor-pointer transition-all flex-shrink-0`}
+            className={`p-1.25 hover:text-white hover:bg-primary bg-muted ${isFrequencyModified ? "text-primary" : "text-muted-foreground"} ${isFrequencyDialogOpen && "text-white bg-primary"} rounded-full cursor-pointer transition-all flex-shrink-0`}
             onClick={() => setIsFrequencyDialogOpen(true)}
           >
             <Calendar className="size-4.5" strokeWidth={2} />
@@ -123,6 +123,7 @@ export function BudgetItemForm({
       <FrequencyDialog
         open={isFrequencyDialogOpen}
         onOpenChange={setIsFrequencyDialogOpen}
+        itemName={budgetItem.name}
         defaultValues={frequencyDefaults}
         onSave={handleFrequencyChange}
       />

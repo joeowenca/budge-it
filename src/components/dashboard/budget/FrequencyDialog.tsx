@@ -4,10 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, CheckIcon, XIcon } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import { CheckIcon, XIcon } from "lucide-react";
 import { DayOfMonthPicker } from "@/components/dashboard/budget/DayOfMonthPicker";
 import {
   dayOfWeekTypeSchema,
@@ -31,12 +28,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const frequencyDialogSchema = z
@@ -115,6 +106,7 @@ type FrequencyDialogValues = z.output<typeof frequencyDialogSchema>;
 interface FrequencyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  itemName?: string;
   defaultValues: Partial<CreateBudgetItemType>;
   onSave: (data: FrequencyDialogValues) => void;
 }
@@ -175,6 +167,7 @@ const DAY_OF_WEEK_LABELS: Record<
 export function FrequencyDialog({
   open,
   onOpenChange,
+  itemName,
   defaultValues,
   onSave,
 }: FrequencyDialogProps) {
@@ -213,16 +206,16 @@ export function FrequencyDialog({
       if (form.getValues("dayOfWeek") == null) {
         form.setValue("dayOfWeek", "monday", { shouldValidate: true });
       }
-      form.setValue("dayOfMonth", null, { shouldValidate: true });
+      form.setValue("dayOfMonth", 1, { shouldValidate: true });
       form.setValue("dayOfMonthIsLast", false, { shouldValidate: true });
-      form.setValue("secondDayOfMonth", null, { shouldValidate: true });
+      form.setValue("secondDayOfMonth", 15, { shouldValidate: true });
       form.setValue("secondDayOfMonthIsLast", false, { shouldValidate: true });
       return;
     }
 
     if (watchedFrequency === F.monthly) {
-      form.setValue("dayOfWeek", null, { shouldValidate: true });
-      form.setValue("secondDayOfMonth", null, { shouldValidate: true });
+      form.setValue("dayOfWeek", "monday", { shouldValidate: true });
+      form.setValue("secondDayOfMonth", 15, { shouldValidate: true });
       form.setValue("secondDayOfMonthIsLast", false, { shouldValidate: true });
       return;
     }
@@ -254,7 +247,7 @@ export function FrequencyDialog({
         <DialogHeader className="pb-2">
           <DialogTitle className="font-black text-2xl">Schedule</DialogTitle>
           <DialogDescription>
-            Set the schedule for your payment
+            Set the schedule for <b>{itemName && itemName.length > 0 && itemName}</b> {!itemName && "your payment"}
           </DialogDescription>
         </DialogHeader>
 
@@ -354,12 +347,9 @@ export function FrequencyDialog({
                         value={field.value ?? undefined}
                         isLast={watchedDayOfMonthIsLast ?? false}
                         onChange={(day, isLast) => {
-                          form.setValue("dayOfMonth", day ?? null, {
-                            shouldValidate: true,
-                          });
-                          form.setValue("dayOfMonthIsLast", Boolean(isLast), {
-                            shouldValidate: true,
-                          });
+                          form.setValue("dayOfMonth", day ?? null);
+                          form.setValue("dayOfMonthIsLast", Boolean(isLast));
+                          form.trigger("dayOfMonth");
                         }}
                       />
                     </FormControl>
@@ -381,15 +371,13 @@ export function FrequencyDialog({
                         <DayOfMonthPicker
                           value={field.value ?? undefined}
                           isLast={watchedDayOfMonthIsLast ?? false}
+                          isFirstPayment={true}
                           onChange={(day, isLast) => {
-                            form.setValue("dayOfMonth", day ?? null, {
-                              shouldValidate: true,
-                            });
-                            form.setValue(
-                              "dayOfMonthIsLast",
-                              Boolean(isLast),
-                              { shouldValidate: true }
-                            );
+                            form.setValue("dayOfMonth", day ?? null);
+                            form.setValue("dayOfMonthIsLast", Boolean(isLast));
+                            
+                            // Validate both fields to check ordering rules
+                            form.trigger(["dayOfMonth", "secondDayOfMonth"]);
                           }}
                         />
                       </FormControl>
@@ -409,14 +397,11 @@ export function FrequencyDialog({
                           value={field.value ?? undefined}
                           isLast={watchedSecondDayOfMonthIsLast ?? false}
                           onChange={(day, isLast) => {
-                            form.setValue("secondDayOfMonth", day ?? null, {
-                              shouldValidate: true,
-                            });
-                            form.setValue(
-                              "secondDayOfMonthIsLast",
-                              Boolean(isLast),
-                              { shouldValidate: true }
-                            );
+                            form.setValue("secondDayOfMonth", day ?? null);
+                            form.setValue("secondDayOfMonthIsLast", Boolean(isLast));
+                            
+                            // Validate both fields
+                            form.trigger(["dayOfMonth", "secondDayOfMonth"]);
                           }}
                         />
                       </FormControl>
@@ -429,7 +414,7 @@ export function FrequencyDialog({
 
             <DialogFooter className="sm:flex-row flex-row gap-2 pt-6">
               <Button
-                type="submit"
+                type="button"
                 variant="ghost"
                 size="icon-lg"
                 onClick={() => onOpenChange(false)}
