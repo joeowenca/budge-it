@@ -1,15 +1,14 @@
-import React from "react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getOrdinal } from "@/lib/utils";
 
 interface DayOfMonthPickerProps {
-  value?: number; // 1-31
-  isLast?: boolean; // whether 'Last Day' is selected
+  value?: number;
+  isLast?: boolean;
   onChange: (day: number | undefined, isLast?: boolean) => void;
   disabled?: boolean;
 }
@@ -23,7 +22,7 @@ export function DayOfMonthPicker({
   const displayText = isLast
     ? "Last Day"
     : value
-    ? `Day ${value}`
+    ? `${getOrdinal(value)}`
     : "Select Day";
 
   const handleDayClick = (dayValue: number) => {
@@ -44,15 +43,15 @@ export function DayOfMonthPicker({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full justify-start text-left font-normal"
+          className="w-full justify-start text-left font-normal h-10"
           disabled={disabled}
         >
           {displayText}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-4" align="start">
+      <PopoverContent className="w-auto p-4" align="center">
         <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+          {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
             <Button
               key={day}
               variant={isSelected(day) ? "default" : "outline"}

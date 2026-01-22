@@ -394,7 +394,7 @@ export function BudgetCategory({
   }
 
   return (
-    <div className="space-y-2 p-4 rounded-xl border-1 border-muted shadow-[5px_5px_0px_rgba(0,0,0,0.05)] transition-colors">
+    <div className="space-y-2 p-4 rounded-xl border-1 border-muted shadow-[0px_0px_10px_rgba(0,0,0,0.05)] transition-colors">
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0 h-7">
         <div 
@@ -571,10 +571,10 @@ export function BudgetCategory({
               archive all its <b>{category.type}{category.type.toString() === "expense" && "s"}</b>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2">
+          <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2 mt-2">
             <div
               onClick={() => setShowArchiveDialog(false)}
-              className="p-1.5 mr-2 text-red-600 bg-muted hover:text-white hover:bg-red-600 rounded-full transition-all cursor-pointer"
+              className="p-1.5 mr-2 text-red-500 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
             >
               <XIcon className="size-7" strokeWidth={2.75} />
             </div>

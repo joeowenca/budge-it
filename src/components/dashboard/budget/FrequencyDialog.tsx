@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, CheckIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { DayOfMonthPicker } from "@/components/dashboard/budget/DayOfMonthPicker";
@@ -37,13 +37,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const frequencyDialogSchema = z
   .object({
@@ -257,10 +251,10 @@ export function FrequencyDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Schedule</DialogTitle>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="font-black text-2xl">Schedule</DialogTitle>
           <DialogDescription>
-            Configure when this budget item occurs.
+            Set the schedule for your payment
           </DialogDescription>
         </DialogHeader>
 
@@ -274,68 +268,32 @@ export function FrequencyDialog({
               name="frequency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Frequency</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(v) =>
-                      field.onChange(v as FrequencyDialogValues["frequency"])
-                    }
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a frequency" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {frequencyTypeSchema.options.map((f) => (
-                        <SelectItem key={f} value={f}>
-                          {FREQUENCY_LABELS[f]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Start Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto size-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(d) => {
-                          if (d) field.onChange(d);
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <FormLabel className="text-md">How often?</FormLabel>
+                  <FormControl>
+                    <Tabs
+                      onValueChange={(v) =>
+                        field.onChange(v as FrequencyDialogValues["frequency"])
+                      }
+                      value={field.value}
+                      className="w-full"
+                    >
+                      {/* Mobile: grid-cols-2 (2 rows of 2) 
+                        Desktop: grid-cols-4 (1 row of 4) 
+                        h-auto: allows the container to expand vertically for the 2 rows
+                      */}
+                      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+                        {frequencyTypeSchema.options.map((f) => (
+                          <TabsTrigger
+                            key={f}
+                            value={f}
+                            className="text-sm py-1.5"
+                          >
+                            {FREQUENCY_LABELS[f]}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -347,24 +305,37 @@ export function FrequencyDialog({
                 name="dayOfWeek"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Day of Week</FormLabel>
-                    <Select
-                      value={field.value ?? ""}
-                      onValueChange={(v) => field.onChange(v)}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a day" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {dayOfWeekTypeSchema.options.map((d) => (
-                          <SelectItem key={d} value={d}>
-                            {DAY_OF_WEEK_LABELS[d]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel className="text-md">{`Every${
+                      watchedFrequency === "bi-weekly" ? " second" : ""
+                    }`}</FormLabel>
+                    <FormControl>
+                      <Tabs
+                        value={field.value ?? undefined}
+                        onValueChange={field.onChange}
+                        className="w-full"
+                      >
+                        <TabsList className="grid w-full grid-cols-7 h-10">
+                          {dayOfWeekTypeSchema.options.map((d) => (
+                            <TabsTrigger
+                              key={d}
+                              value={d}
+                              // px-0 removes internal padding so the letter can center in the narrow column
+                              className="py-1.5 h-full text-sm"
+                            >
+                              {/* Mobile: Show only first letter (M, T, W...) */}
+                              <span className="sm:hidden">
+                                {DAY_OF_WEEK_LABELS[d].charAt(0)}
+                              </span>
+                              
+                              {/* Desktop: Show 3 letters (Mon, Tue...) */}
+                              <span className="hidden sm:inline">
+                                {DAY_OF_WEEK_LABELS[d].slice(0, 3)}
+                              </span>
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -377,7 +348,7 @@ export function FrequencyDialog({
                 name="dayOfMonth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Day of Month</FormLabel>
+                    <FormLabel className="text-md">Every</FormLabel>
                     <FormControl>
                       <DayOfMonthPicker
                         value={field.value ?? undefined}
@@ -405,7 +376,7 @@ export function FrequencyDialog({
                   name="dayOfMonth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment 1</FormLabel>
+                      <FormLabel className="text-md">Every</FormLabel>
                       <FormControl>
                         <DayOfMonthPicker
                           value={field.value ?? undefined}
@@ -432,7 +403,7 @@ export function FrequencyDialog({
                   name="secondDayOfMonth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment 2</FormLabel>
+                      <FormLabel className="text-md">And</FormLabel>
                       <FormControl>
                         <DayOfMonthPicker
                           value={field.value ?? undefined}
@@ -456,15 +427,24 @@ export function FrequencyDialog({
               </div>
             )}
 
-            <DialogFooter>
+            <DialogFooter className="sm:flex-row flex-row gap-2 pt-6">
               <Button
-                type="button"
-                variant="outline"
+                type="submit"
+                variant="ghost"
+                size="icon-lg"
                 onClick={() => onOpenChange(false)}
+                className="p-1.5 mr-2 text-red-500 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
               >
-                Cancel
+                <XIcon className="size-7" strokeWidth={2.75} />
               </Button>
-              <Button type="submit">Save</Button>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon-lg"
+                className="p-1.5 text-green-500 bg-muted hover:text-white hover:bg-green-500 rounded-full transition-all cursor-pointer"
+              >
+                <CheckIcon className="size-7" strokeWidth={3} />
+              </Button>
             </DialogFooter>
           </form>
         </Form>
