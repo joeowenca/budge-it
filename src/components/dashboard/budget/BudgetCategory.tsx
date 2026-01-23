@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Pencil, CheckIcon, X as XIcon, Trash2, Undo, TriangleAlert } from "lucide-react";
+import { ChevronRight, Pencil, CheckIcon, X as XIcon, Trash2, Undo, TriangleAlert, Plus } from "lucide-react";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
 import { AmountPill } from "@/components/AmountPill";
@@ -91,9 +91,14 @@ export function BudgetCategory({
   const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
   const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
   const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
+  
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showUnfinishedItemDialog, setShowUnfinishedItemDialog] = useState(false);
+  
   const [newItems, setNewItems] = useState<CreateItemDraft[]>([]);
   const [newItem, setNewItem] = useState<CreateItemDraft>(defaultItem);
+
+  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const itemsToBeArchivedCount = useMemo(
     () => Object.values(itemEditValues).filter(i => i.isArchived).length,
@@ -234,10 +239,15 @@ export function BudgetCategory({
     initializeEditState();
   };
 
-  const handleSave = async () => {
+  /**
+   * The actual logic to save to DB.
+   * This ignores the current 'newItem' input state and only saves 'newItems' list + edits.
+   */
+  const executeSave = async () => {
     if (isEmpty) return;
-
-    if (itemNotAdded) return;
+    
+    // Note: We intentionally DO NOT check itemNotAdded here, 
+    // because executeSave is called when we want to bypass that check (via the Red X)
 
     if (!hasAnyEdits) {
       closeEditState();
@@ -310,6 +320,27 @@ export function BudgetCategory({
         "Failed to save budget items";
       console.error("Failed to save budget items:", errorMessage);
     }
+  };
+
+  /**
+   * Wrapper for the Save Button
+   * Checks for unfinished items before calling executeSave
+   */
+  const handleSave = () => {
+    if (itemNotAdded) {
+      setShowUnfinishedItemDialog(true);
+      return;
+    }
+    executeSave();
+  };
+
+  /**
+   * Handles the "Red X" (Discard) in the Unfinished Item Dialog
+   */
+  const handleDiscardAndSave = () => {
+    setShowUnfinishedItemDialog(false);
+    resetNewItem(); // Clear the text input
+    executeSave(); // Proceed with saving the rest
   };
 
   const handleItemNameChange = (itemId: number, value: string) => {
@@ -395,6 +426,14 @@ export function BudgetCategory({
       setIsExpanded(!isExpanded);
     }
   }
+
+  const handleKeepEditing = () => {
+    setShowUnfinishedItemDialog(false);
+
+    setTimeout(() => {
+      newItemInputRef.current?.focus();
+    }, 10);
+  };
 
   return (
     <div className="space-y-2 p-4 rounded-xl border-1 border-muted shadow-[0px_0px_10px_rgba(0,0,0,0.05)] transition-colors">
@@ -539,6 +578,7 @@ export function BudgetCategory({
                 <BudgetItemForm
                   action="add"
                   budgetItem={newItem}
+                  inputRef={newItemInputRef}
                   onNameChange={handleNewItemNameChange}
                   onAmountChange={handleNewItemAmountChange}
                   type={category.type}
@@ -559,6 +599,7 @@ export function BudgetCategory({
         </>
       )}
 
+      {/* Archive Confirmation Dialog */}
       <Dialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
         <DialogContent showCloseButton={false} className="sm:max-w-xs max-w-xs min-w-0 gap-2">
           <DialogHeader>
@@ -583,6 +624,55 @@ export function BudgetCategory({
             </div>
             <div
               onClick={handleArchiveCategory}
+              className="p-1.5 text-green-500 bg-muted hover:text-white hover:bg-green-500 rounded-full transition-all cursor-pointer"
+            >
+              <CheckIcon className="size-7" strokeWidth={3} />
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unfinished Item Warning Dialog */}
+      <Dialog open={showUnfinishedItemDialog} onOpenChange={setShowUnfinishedItemDialog}>
+        <DialogContent showCloseButton={false} className="sm:max-w-xs max-w-xs min-w-0 gap-2">
+          <DialogHeader>
+            <div className="flex justify-center">
+              <div className="p-2 rounded-full bg-yellow-100">
+                <TriangleAlert className="size-7 text-yellow-600" strokeWidth={2.5} />
+              </div>
+            </div>
+            <DialogTitle className="text-center text-xl">Unfinished item</DialogTitle>
+            <DialogDescription className="text-center text-md mb-1">
+              You have a new item <b><i>{newItem.name}</i></b> that isn&apos;t added yet. 
+            </DialogDescription>
+            <DialogDescription className="text-center text-md mb-4">
+              <div className="flex flex-col items-center">
+                <i>Tip: You need to press</i>
+                <span className="flex">
+                  <div
+                    className="p-1.25 mr-2 flex-1 text-primary bg-muted rounded-full flex-shrink-0"
+                  >
+                    <Plus className="size-4.5" strokeWidth={2.75} />
+                  </div>
+                  <i>to add it</i>
+                </span>
+              </div>
+            </DialogDescription>
+            <DialogDescription className="text-center text-md mb-2">
+              Do you want to finish it?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center justify-center sm:flex-row flex-row gap-2 mt-2">
+            {/* Red X: No, I don't want to finish it. Discard and Save. */}
+            <div
+              onClick={handleDiscardAndSave}
+              className="p-1.5 mr-2 text-red-500 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"
+            >
+              <XIcon className="size-7" strokeWidth={2.75} />
+            </div>
+            {/* Green Check: Yes, I want to finish it. Close dialog and stay in edit mode. */}
+            <div
+              onClick={handleKeepEditing}
               className="p-1.5 text-green-500 bg-muted hover:text-white hover:bg-green-500 rounded-full transition-all cursor-pointer"
             >
               <CheckIcon className="size-7" strokeWidth={3} />

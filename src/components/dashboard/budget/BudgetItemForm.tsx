@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { RefObject, useState } from "react";
 import { UpdateItemDraft, CreateItemDraft } from "@/components/dashboard/budget/BudgetCategory";
 import { Input } from "@/components/ui/input";
 import { Calendar, Trash2, Plus } from "lucide-react";
@@ -12,6 +12,7 @@ import { capitalizeFirstLetter } from "@/lib/utils";
 interface BudgetItemFormProps {
   action: "edit" | "add";
   budgetItem: UpdateItemDraft | CreateItemDraft;
+  inputRef?: RefObject<HTMLInputElement | null>;
   onNameChange: (value: string) => void;
   onAmountChange: (value: string) => void;
   onArchive?: () => void;
@@ -24,6 +25,7 @@ interface BudgetItemFormProps {
 export function BudgetItemForm({
   action,
   budgetItem,
+  inputRef,
   onNameChange,
   onAmountChange,
   onArchive,
@@ -75,6 +77,7 @@ export function BudgetItemForm({
         <div className="flex flex-1 min-w-0 gap-2 mr-1">
           <Input
             type="text"
+            ref={inputRef}
             value={budgetItem.name || ""}
             onChange={(e) => onNameChange?.(e.target.value)}
             placeholder={namePlaceholder}
