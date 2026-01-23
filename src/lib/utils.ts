@@ -1,4 +1,5 @@
-import { FrequencyType } from "@/db/schema";
+import { UpdateItemDraft, CreateItemDraft } from "@/components/dashboard/budget/BudgetCategory";
+import { FrequencyType, ReadBudgetItemType } from "@/db/schema";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -14,20 +15,66 @@ export function convertAmountToCurrency(amount: number): string {
   }).format(amount / 100);
 }
 
-export const getFrequencyMultiplier = (frequency: FrequencyType) => {
+const dayOfWeekMap: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+export const getFrequencyMultiplier = (item: UpdateItemDraft | CreateItemDraft | ReadBudgetItemType): number => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstOfMonth = new Date(year, month, 1);
+  const lastOfMonth = new Date(year, month + 1, 0);
+  const lastDayOfMonth = lastOfMonth.getDate();
+
+  const frequency: FrequencyType = item.frequency ?? "monthly";
+
   switch (frequency) {
     case "weekly":
-      return 4;
-    case "bi-weekly":
-      return 2;
-    case "semi-monthly":
-      return 2;
+    case "bi-weekly": {
+      // Convert string dayOfWeek to number
+      const targetDay = item.dayOfWeek
+        ? dayOfWeekMap[item.dayOfWeek.toLowerCase()] ?? 0
+        : firstOfMonth.getDay(); // default to first day of month
+      const interval = frequency === "weekly" ? 7 : 14;
+
+      const firstDay = firstOfMonth.getDay();
+      const firstOccurrence = 1 + ((7 + targetDay - firstDay) % 7);
+
+      let count = 0;
+      for (let d = firstOccurrence; d <= lastDayOfMonth; d += interval) {
+        count++;
+      }
+
+      return count;
+    }
+
+    case "semi-monthly": {
+      // Use dayOfMonth and secondDayOfMonth
+      const firstDayOfMonth = item.dayOfMonth ?? 1;
+      const secondDayOfMonth =
+        item.secondDayOfMonth ??
+        Math.min(15, lastDayOfMonth); // default to 15th if not provided
+
+      let count = 0;
+      if (firstDayOfMonth <= lastDayOfMonth) count++;
+      if (secondDayOfMonth <= lastDayOfMonth) count++;
+      return count;
+    }
+
     case "monthly":
-      return 1;
     default:
       return 1;
   }
 };
+
 
 export function getOrdinal(n: number): string {
   if (n < 1 || n > 31) return String(n); // just in case

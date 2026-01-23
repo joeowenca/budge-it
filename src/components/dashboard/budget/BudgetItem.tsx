@@ -1,6 +1,6 @@
 import { ReadBudgetItemType } from "@/db/schema";
 import { AmountPill } from "@/components/AmountPill";
-import { convertAmountToCurrency } from "@/lib/utils";
+import { convertAmountToCurrency, getFrequencyMultiplier } from "@/lib/utils";
 
 import { DateDescription } from "./DateDescription";
 
@@ -9,6 +9,7 @@ interface BudgetItemProps {
 }
 
 export function BudgetItem({ item }: BudgetItemProps) {
+  const multiplier = getFrequencyMultiplier(item);
   return (
     <div className="pl-2 py-1 pb-2 text-sm border-b-1">
       <div className="flex items-center justify-between">
@@ -19,9 +20,7 @@ export function BudgetItem({ item }: BudgetItemProps) {
           <DateDescription item={item} />
         </div>
         <span className="text-xs text-muted-foreground tracking-[0.2em] ml-4 mr-1">
-          {item.frequency === "weekly" && "4x"}
-          {item.frequency === "bi-weekly" && "2x"}
-          {item.frequency === "semi-monthly" && "2x"}
+          {multiplier > 1 && multiplier + "x"}
         </span>
         <AmountPill amount={convertAmountToCurrency(item.amount)} color="yellow" />
       </div>

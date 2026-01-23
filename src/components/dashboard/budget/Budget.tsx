@@ -86,7 +86,7 @@ export default async function Budget() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex-none">
-        <div className="flex items-center justify-between p-5">
+        <div className="flex items-center justify-between px-5 pb-5">
           <h2 className="text-3xl font-black">Budget</h2>
         </div>
       </div>

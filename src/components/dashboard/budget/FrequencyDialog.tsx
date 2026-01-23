@@ -247,7 +247,7 @@ export function FrequencyDialog({
         <DialogHeader className="pb-2">
           <DialogTitle className="font-black text-2xl">Schedule</DialogTitle>
           <DialogDescription>
-            Set the schedule for <b>{itemName && itemName.length > 0 && itemName}</b> {!itemName && "your payment"}
+            Set the schedule for your <b className="text-black font-medium">{itemName && itemName.length > 0 && itemName}</b> {!itemName && "your payment"}
           </DialogDescription>
         </DialogHeader>
 

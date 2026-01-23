@@ -182,7 +182,7 @@ export function BudgetCategory({
       .reduce((sum, item) => {
         return (
           sum +
-          toCents(item.amount) * getFrequencyMultiplier(item.frequency)
+          toCents(item.amount) * getFrequencyMultiplier(item)
         );
       }, 0);
   }, [itemsInDB, itemEditValues, newItems]);
