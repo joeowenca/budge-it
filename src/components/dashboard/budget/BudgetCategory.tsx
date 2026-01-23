@@ -106,6 +106,7 @@ export function BudgetCategory({
   );
 
   const isEmpty = activeItemsCount === 0;
+  const itemNotAdded = newItem.name.length > 0;
 
   function normalizeItemForCompare(item: ReadBudgetItemType): UpdateItemDraft {
     return {
@@ -235,6 +236,8 @@ export function BudgetCategory({
 
   const handleSave = async () => {
     if (isEmpty) return;
+
+    if (itemNotAdded) return;
 
     if (!hasAnyEdits) {
       closeEditState();
