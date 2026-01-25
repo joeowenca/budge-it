@@ -646,17 +646,17 @@ export function BudgetCategory({
               You have a new item <b><i>{newItem.name}</i></b> that isn&apos;t added yet. 
             </DialogDescription>
             <DialogDescription className="text-center text-md mb-4">
-              <div className="flex flex-col items-center">
+              <span className="flex flex-col items-center">
                 <i>Tip: You need to press</i>
                 <span className="flex">
-                  <div
+                  <span
                     className="p-1.25 mr-2 flex-1 text-primary bg-muted rounded-full flex-shrink-0"
                   >
                     <Plus className="size-4.5" strokeWidth={2.75} />
-                  </div>
+                  </span>
                   <i>to add it</i>
                 </span>
-              </div>
+              </span>
             </DialogDescription>
             <DialogDescription className="text-center text-md mb-2">
               Do you want to finish it?
