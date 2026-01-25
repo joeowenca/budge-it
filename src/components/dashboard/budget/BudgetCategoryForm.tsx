@@ -176,7 +176,7 @@ export function BudgetCategoryForm({
                         closeForm();
                     }
                 }}
-                className={`font-semibold h-9 pl-2 ${isEditing && "w-36 py-0"} ${errorMessage ? "border-red-500 focus-visible:ring-red-500 pr-8" : ""}`}
+                className={`font-semibold h-9 pl-2 w-36 ${errorMessage ? "border-red-500 focus-visible:ring-red-500 pr-8" : ""}`}
                 autoFocus
             />
 

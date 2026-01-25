@@ -169,7 +169,7 @@ export async function createBudgetCategory(
       })
       .returning();
 
-    revalidatePath("/budget");
+    revalidatePath("/");
 
     return { success: true, data: newCategory };
   } catch (error) {
@@ -344,7 +344,7 @@ export async function updateBudgetCategory(
       return updatedCategory;
     });
 
-    revalidatePath("/budget");
+    revalidatePath("/");
     revalidatePath("/");
 
     return { success: true, data: result };

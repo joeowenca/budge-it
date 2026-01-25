@@ -151,7 +151,11 @@ export function BudgetCategory({
 
   const hasNewItems = newItems.length > 0;
 
-  const hasAnyEdits = hasItemEdits || hasNewItems;
+  const hasCategoryEdits = 
+    category.emoji !== categoryEditValues.emoji ||
+    category.name !== categoryEditValues.name;
+
+  const hasAnyEdits = hasItemEdits || hasNewItems || hasCategoryEdits;
 
   const canUndo = itemsInDB.length > 0 && hasAnyEdits;
 
@@ -180,6 +184,12 @@ export function BudgetCategory({
   }
 
   const totalAmount = useMemo(() => {
+    if (!isEditing) {
+      return itemsInDB.reduce((sum, item) => {
+        return sum + toCents(item.amount) * getFrequencyMultiplier(item);
+      }, 0);
+    }
+
     return [
       ...itemsInDB.map(item => itemEditValues[item.id] ?? item),
       ...newItems,
@@ -317,8 +327,8 @@ export function BudgetCategory({
         (updateResult.success === false && 'error' in updateResult ? updateResult.error : undefined) ||
         (createResult.success === false && 'error' in createResult ? createResult.error : undefined) ||
         (categoryResult.success === false && 'error' in categoryResult ? categoryResult.error : undefined) ||
-        "Failed to save budget items";
-      console.error("Failed to save budget items:", errorMessage);
+        "Failed to save category";
+      console.error("Failed to save category:", errorMessage);
     }
   };
 
