@@ -61,7 +61,7 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
       <div className="flex items-center h-9">
         <div
           onClick={() => {toggleIsAdding()}}
-          className={`${isAdding && "hidden"} ml-1 text-muted-foreground rounded-full bg-muted cursor-pointer hover:text-white hover:bg-primary transition-all p-1.25`}
+          className={`${isAdding && "hidden"} ml-1 text-primary/75 rounded-full bg-muted cursor-pointer hover:text-white hover:bg-primary transition-all p-1.25`}
         >
             <Plus className="size-4.5" strokeWidth={2.75} />
         </div>

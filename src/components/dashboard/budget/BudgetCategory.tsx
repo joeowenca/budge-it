@@ -478,7 +478,10 @@ export function BudgetCategory({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="font-semibold truncate"><span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>{category.name}</span>
+              <span className="font-semibold truncate">
+                <span className={`${category.emoji && "mr-2"} text-xl`}>{category.emoji}</span>
+                {category.name}
+              </span>
               <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-all ${(isExpanded) ? "rotate-90" : "rotate-0"}`} strokeWidth={2.5} />
             </div>
           )}

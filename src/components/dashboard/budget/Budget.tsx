@@ -1,5 +1,7 @@
+import { BudgetNet } from "./BudgetNet";
 import BudgetSection from "./BudgetSection";
 import { getBudgetCategories, getBudgetItems } from "@/app/actions/budgetActions";
+import { getFrequencyMultiplier } from "@/lib/utils";
 
 type Category = NonNullable<Awaited<ReturnType<typeof getBudgetCategories>>["data"]>[number];
 type BudgetItem = NonNullable<Awaited<ReturnType<typeof getBudgetItems>>["data"]>[number];
@@ -83,6 +85,20 @@ export default async function Budget() {
     budgetItems: savingsItemsByCategoryId[category.id] || [],
   }));
 
+  const calculateTotal = (items: BudgetItem[]) => {
+    return items
+      .filter((item) => !item.isArchived) // Ensure archived items aren't counted
+      .reduce((sum, item) => {
+        return sum + (item.amount * getFrequencyMultiplier(item));
+      }, 0);
+  };
+
+  const incomeTotalAmount = calculateTotal(incomeItems);
+  const expensesTotalAmount = calculateTotal(expenseItems);
+  const savingsTotalAmount = calculateTotal(savingsItems);
+
+
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex-none">
@@ -92,8 +108,13 @@ export default async function Budget() {
       </div>
 
       <div className="flex-1 min-h-0">
-        <div className="h-full lg:overflow-y-auto px-5 pb-5">
+        <div className="h-full lg:overflow-y-auto px-5 py-5">
           <div className="space-y-6">
+            <BudgetNet 
+              incomeTotal={incomeTotalAmount} 
+              expensesTotal={expensesTotalAmount} 
+              savingsTotal={savingsTotalAmount} 
+            />
             <BudgetSection title="Income" categories={incomeCategoriesWithBudgetItems} budgetType="income" />
             <BudgetSection title="Expenses" categories={expenseCategoriesWithBudgetItems} budgetType="expense" />
             <BudgetSection title="Savings" categories={savingsCategoriesWithBudgetItems} budgetType="savings" />
