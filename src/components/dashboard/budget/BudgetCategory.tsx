@@ -436,7 +436,7 @@ export function BudgetCategory({
   };
 
   return (
-    <div className="space-y-2 p-4 rounded-xl border-1 border-muted shadow-[0px_0px_10px_rgba(0,0,0,0.05)] transition-colors">
+    <div className="space-y-2 p-4 rounded-xl shadow-[0px_0px_12px_rgba(0,0,0,0.1)] transition-colors">
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0 h-7">
         <div 
