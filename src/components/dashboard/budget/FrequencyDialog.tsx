@@ -148,11 +148,13 @@ function getBiWeeklyOptions(targetDayOfWeek: string) {
         prefix = "Following"; 
     }
 
+    const isTodayOrTomorrow = prefix === "Today" || prefix === "Tomorrow";
+
     return {
       tabLabel: { 
         prefix, 
-        shortDay, 
-        fullDay: prefix === "Today" || prefix === "Tomorrow" ? "" : fullDay 
+        shortDay: isTodayOrTomorrow ? "" : shortDay, 
+        fullDay: isTodayOrTomorrow ? "" : fullDay 
       },
 
       dateLabel: dateStr
@@ -298,8 +300,7 @@ export function FrequencyDialog({
     if (watchedFrequency === 'bi-weekly' && watchedDayOfWeek && watchedBiWeeklyStart) {
         const offset = watchedBiWeeklyStart === 'next' ? 1 : 0;
         const newStartDate = getNextOccurrence(watchedDayOfWeek, offset);
-        
-        // Update the hidden startDate field that actually goes to the DB
+
         form.setValue("startDate", newStartDate);
     }
   }, [watchedFrequency, watchedDayOfWeek, watchedBiWeeklyStart, form]);
@@ -344,18 +345,6 @@ export function FrequencyDialog({
   const isWeeklyLike =
     watchedFrequency === "weekly" || watchedFrequency === "bi-weekly";
   const isBiWeekly = watchedFrequency === "bi-weekly";
-
-  const dayLabel = watchedDayOfWeek 
-    ? DAY_OF_WEEK_LABELS[watchedDayOfWeek] 
-    : "Day";
-
-  const isThisStartToday = useMemo(() => {
-    if (!watchedDayOfWeek) return false;
-    const thisDate = getNextOccurrence(watchedDayOfWeek, 0);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    return thisDate.getTime() === today.getTime();
-  }, [watchedDayOfWeek]);
 
   const { option1, option2 } = useMemo(
     () => getBiWeeklyOptions(watchedDayOfWeek || "monday"),
@@ -463,7 +452,7 @@ export function FrequencyDialog({
                                 {option1.tabLabel.prefix} {option1.tabLabel.shortDay}
                              </span>
                              <span className="hidden sm:inline">
-                                {option1.tabLabel.prefix} {option1.tabLabel.fullDay || option1.tabLabel.shortDay}
+                                {option1.tabLabel.prefix} {option1.tabLabel.fullDay}
                              </span>
                           </TabsTrigger>
 
@@ -472,7 +461,7 @@ export function FrequencyDialog({
                                 {option2.tabLabel.prefix} {option2.tabLabel.shortDay}
                              </span>
                              <span className="hidden sm:inline">
-                                {option2.tabLabel.prefix} {option2.tabLabel.fullDay || option2.tabLabel.shortDay}
+                                {option2.tabLabel.prefix} {option2.tabLabel.fullDay}
                              </span>
                           </TabsTrigger>
                         </TabsList>
