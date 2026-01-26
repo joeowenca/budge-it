@@ -15,7 +15,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="h-full container mx-auto lg:p-4">
+    <div className="h-full container mx-auto lg:px-4">
       <DashboardGrid />
     </div>
   );

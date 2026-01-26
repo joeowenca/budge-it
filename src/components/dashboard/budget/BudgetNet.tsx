@@ -47,7 +47,7 @@ export function BudgetNet({
             onClick={() => setIsExpanded(!isExpanded)}
         >
           <span className="font-semibold truncate">
-            <span className="mr-2 text-xl">💰</span>
+            <span className="mr-2 text-xl">💸</span>
             Spending
           </span>
           <ChevronRight 

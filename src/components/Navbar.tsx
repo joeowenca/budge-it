@@ -11,6 +11,9 @@ export default function Navbar() {
         <Link href="/" className="font-black text-4xl tracking-tight text-blue-600">
           Budge-it!
         </Link>
+        <div className="bg-green-500/10 text-green-600 text-xs px-3 py-1 rounded-full">
+          Alpha Build
+        </div>
       </div>
 
       <div className="flex items-center gap-4">

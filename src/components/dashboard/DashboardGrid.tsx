@@ -5,16 +5,10 @@ import Spending from "./Spending";
 
 export default function DashboardGrid() {
   return (
-    <div className="grid grid-cols-1 h-full w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full min-h-0 overflow-y-auto">
-        <div className="h-full lg:overflow-hidden order-3 lg:order-1">
+    <div className="grid grid-cols-1 h-full w-full px-4">
+      <div className="grid grid-cols-1 gap-6 h-full min-h-0 overflow-y-auto">
+        <div className="h-full w-full max-w-xl mx-auto lg:overflow-hidden order-3 lg:order-1">
           <Budget />
-        </div>
-        <div className="h-full lg:overflow-hidden order-1 lg:order-2">
-          <Insights />
-        </div>
-        <div className="h-full lg:overflow-hidden order-2 lg:order-3">
-          <Spending />
         </div>
       </div>
     </div>

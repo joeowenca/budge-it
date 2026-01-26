@@ -101,15 +101,9 @@ export default async function Budget() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-none">
-        <div className="flex items-center justify-between px-5 pb-5">
-          <h2 className="text-3xl font-black">Budget</h2>
-        </div>
-      </div>
-
       <div className="flex-1 min-h-0">
         <div className="h-full lg:overflow-y-auto px-5 py-5">
-          <div className="space-y-6">
+          <div className="space-y-6 mt-4">
             <BudgetNet 
               incomeTotal={incomeTotalAmount} 
               expensesTotal={expensesTotalAmount} 
