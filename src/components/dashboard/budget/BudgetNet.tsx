@@ -40,10 +40,10 @@ export function BudgetNet({
   return (
     <div className="space-y-2 p-4 rounded-xl shadow-[0px_0px_12px_rgba(0,0,0,0.1)] transition-colors bg-card">
       <div 
-        className="flex items-center justify-between m-0 h-7 select-none group"
+        className="flex items-center justify-between m-0 h-7 group"
       >
         <div 
-            className="flex items-center gap-2 pr-2 transition-all cursor-pointer hover:text-primary"
+            className="flex items-center gap-2 pr-2 transition-all cursor-pointer select-none hover:text-primary"
             onClick={() => setIsExpanded(!isExpanded)}
         >
           <span className="font-semibold truncate">

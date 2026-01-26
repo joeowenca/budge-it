@@ -16,7 +16,7 @@ interface BudgetItemFormProps {
   onNameChange: (value: string) => void;
   onAmountChange: (value: string) => void;
   onArchive?: () => void;
-  type?: z.infer<typeof budgetTypeSchema>; // For "add" mode
+  type?: z.infer<typeof budgetTypeSchema>;
   onAdd?: () => void;
   onFrequencyChange?: (data: any) => void;
   isFrequencyModified?: boolean;
@@ -38,8 +38,9 @@ export function BudgetItemForm({
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty string, numbers, and decimals (including trailing dots)
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+    const MAX_LENGTH = 10;
+
+    if ((value === "" || /^\d*\.?\d*$/.test(value)) && value.length <= MAX_LENGTH) {
       onAmountChange?.(value);
     }
   };
@@ -56,7 +57,6 @@ export function BudgetItemForm({
     setIsFrequencyDialogOpen(false);
   };
 
-  // Extract only frequency-related fields for the dialog
   const frequencyDefaults = {
     frequency: budgetItem.frequency,
     startDate: budgetItem.startDate,
