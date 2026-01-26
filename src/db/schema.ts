@@ -78,7 +78,7 @@ export const createBudgetItemSchema = z
     secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
     secondDayOfMonthIsLast: z.boolean().default(false),
 
-    sortOrder: z.number(),
+    sortOrder: z.number().optional(),
     isArchived: z.boolean().default(false)
   })
   .superRefine((data, ctx) => {

@@ -34,7 +34,7 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
       </div>
       <div className="space-y-4 mb-4">
         {categories.filter((category) => !category.isArchived).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No categories yet</p>
+          <p className="text-sm text-muted-foreground ml-1">No categories yet - add one below!</p>
         ) : (
           categories
             .filter((category) => !category.isArchived)

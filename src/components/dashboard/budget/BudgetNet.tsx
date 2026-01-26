@@ -48,7 +48,7 @@ export function BudgetNet({
         >
           <span className="font-semibold truncate">
             <span className="mr-2 text-xl">💸</span>
-            Spending
+            Available
           </span>
           <ChevronRight 
             className={`h-5 w-5 flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-90" : "rotate-0"}`} 
@@ -71,7 +71,7 @@ export function BudgetNet({
           </div>
 
         <div className="flex items-center justify-between pt-1">
-            <span className="font-medium">Spending available</span>
+            <span className="font-medium">Monthly available</span>
             <AmountPill amount={convertAmountToCurrency(netTotal)} color="yellow" />
         </div>
         </>

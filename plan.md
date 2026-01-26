@@ -208,22 +208,23 @@
                 - Wire second to `secondDayOfMonth` / `secondDayOfMonthIsLast`.
         - [x] **Integration** 
             - Pass item data in, validate with Zod schema, pass data out via `onSave`.
-    - [ ] **Step 5.7.6** Integrate FrequencyDialog into BudgetItemForm
-        - [ ] Update `BudgetItemForm` props to include `onFrequencyChange: (updates: Partial<z.infer<typeof createBudgetItemSchema>>) => void`.
-        - [ ] Add local state `isDialogOpen` to control visibility.
-        - [ ] Add `onClick` handler to the Calendar icon wrapper to open dialog.
-        - [ ] Create `handleFrequencyChange` function:
+    - [x] **Step 5.7.6** Integrate FrequencyDialog into BudgetItemForm
+        - [x] Update `BudgetItemForm` props to include `onFrequencyChange: (updates: Partial<z.infer<typeof createBudgetItemSchema>>) => void`.
+        - [x] Add local state `isDialogOpen` to control visibility.
+        - [x] Add `onClick` handler to the Calendar icon wrapper to open dialog.
+        - [x] Create `handleFrequencyChange` function:
             - Receives data from `FrequencyDialog`'s `onSave`.
             - Calls the `onFrequencyChange` prop to update the parent draft.
             - Closes the dialog.
-        - [ ] Render `<FrequencyDialog />` at the bottom of the component.
-    - [ ] **Step 5.7.7** Integrate Frequency Logic into BudgetCategory
-        - [ ] Open `BudgetCategory.tsx`.
-        - [ ] **Create Handlers:**
+        - [x] Render `<FrequencyDialog />` at the bottom of the component.
+    - [x] **Step 5.7.7** Integrate Frequency Logic into BudgetCategory
+        - [x] Open `BudgetCategory.tsx`.
+        - [x] **Create Handlers:**
             - `handleItemFrequencyChange(itemId, data)`: Updates `itemEditValues`.
             - `handleNewListItemFrequencyChange(tempId, data)`: Updates a specific item in the `newItems` array.
             - `handleNewInputFrequencyChange(data)`: Updates the `newItem` state (the add row).
-        - [ ] **Update JSX:**
+        - [x] **Update JSX:**
             - Pass `onFrequencyChange` to the existing items' `BudgetItemForm`.
             - Pass `onFrequencyChange` to the `newItems` loop `BudgetItemForm`.
             - Pass `onFrequencyChange` to the "Add" mode `BudgetItemForm`.
+

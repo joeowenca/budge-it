@@ -79,7 +79,6 @@ export function BudgetCategory({
     secondDayOfMonthIsLast: false,
     startDate: today,
     isArchived: false,
-    sortOrder: 0,
   }
 
   const originalCategoryValues: CategoryEditValueTypes = {

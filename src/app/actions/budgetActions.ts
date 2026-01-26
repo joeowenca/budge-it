@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { budgetCategories, budgetItems, getBudgetCategoriesFilterSchema, getBudgetItemsFilterSchema, createBudgetCategorySchema, createBudgetItemSchema, updateBudgetCategorySchema, updateBudgetItemSchema, frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
 import { checkUser } from "@/lib/checkUser";
-import { eq, and, InferInsertModel } from "drizzle-orm";
+import { eq, and, InferInsertModel, desc } from "drizzle-orm";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
@@ -156,6 +156,18 @@ export async function createBudgetCategory(
       };
     }
 
+    // Find the current highest sortOrder for categories of the same type
+    const highestSortOrderCategory = await db.query.budgetCategories.findFirst({
+      where: and(
+        eq(budgetCategories.userId, user.id),
+        eq(budgetCategories.type, validatedData.type)
+      ),
+      orderBy: desc(budgetCategories.sortOrder),
+    });
+
+    // Set sortOrder to max + 1, or 0 if no categories exist
+    const newSortOrder = highestSortOrderCategory ? highestSortOrderCategory.sortOrder + 1 : 0;
+
     // Create new category
     const [newCategory] = await db
       .insert(budgetCategories)
@@ -165,7 +177,7 @@ export async function createBudgetCategory(
         name: validatedData.name,
         emoji: validatedData.emoji,
         color: validatedData.color,
-        sortOrder: validatedData.sortOrder ?? 0,
+        sortOrder: validatedData.sortOrder ?? newSortOrder,
       })
       .returning();
 
@@ -218,6 +230,18 @@ export async function createBudgetItem(
       return { success: false, error: "Budget category not found" };
     }
 
+    // Find the current highest sortOrder for items in the same category
+    const highestSortOrderItem = await db.query.budgetItems.findFirst({
+      where: and(
+        eq(budgetItems.userId, user.id),
+        eq(budgetItems.budgetCategoryId, validatedData.budgetCategoryId)
+      ),
+      orderBy: desc(budgetItems.sortOrder),
+    });
+
+    // Set sortOrder to max + 1, or 0 if no items exist
+    const newSortOrder = highestSortOrderItem ? highestSortOrderItem.sortOrder + 1 : 0;
+
     // Create new budget item
     const [newItem] = await db
       .insert(budgetItems)
@@ -232,7 +256,7 @@ export async function createBudgetItem(
         dayOfWeek: validatedData.dayOfWeek,
         dayOfMonth: validatedData.dayOfMonth,
         secondDayOfMonth: validatedData.secondDayOfMonth,
-        sortOrder: validatedData.sortOrder ?? 0,
+        sortOrder: validatedData.sortOrder ?? newSortOrder,
       })
       .returning();
 
@@ -384,42 +408,75 @@ export async function batchCreateBudgetItems(
 
     // Use transaction to create all items
     const createdItems = await db.transaction(async (tx) => {
+      // Step A: Group items by budgetCategoryId
+      const itemsByCategory = new Map<number, typeof validatedDataArray>();
+      
+      for (const validatedData of validatedDataArray) {
+        const categoryId = validatedData.budgetCategoryId;
+        if (!itemsByCategory.has(categoryId)) {
+          itemsByCategory.set(categoryId, []);
+        }
+        itemsByCategory.get(categoryId)!.push(validatedData);
+      }
+
+      // Step B: Process each category group
       const results = [];
 
-      for (const validatedData of validatedDataArray) {
+      for (const [categoryId, items] of itemsByCategory.entries()) {
         // Verify that the budget category exists and belongs to the user
         const category = await tx.query.budgetCategories.findFirst({
           where: and(
-            eq(budgetCategories.id, validatedData.budgetCategoryId),
+            eq(budgetCategories.id, categoryId),
             eq(budgetCategories.userId, user.id)
           ),
         });
 
         if (!category) {
-          throw new Error(`Budget category with id ${validatedData.budgetCategoryId} not found`);
+          throw new Error(`Budget category with id ${categoryId} not found`);
         }
 
-        // Create new budget item
-        const [newItem] = await tx
-          .insert(budgetItems)
-          .values({
-            userId: user.id,
-            budgetCategoryId: validatedData.budgetCategoryId,
-            type: validatedData.type,
-            name: validatedData.name,
-            amount: validatedData.amount,
-            frequency: validatedData.frequency,
-            startDate: validatedData.startDate,
-            dayOfWeek: validatedData.dayOfWeek,
-            dayOfMonth: validatedData.dayOfMonth,
-            dayOfMonthIsLast: validatedData.dayOfMonthIsLast ?? false,
-            secondDayOfMonth: validatedData.secondDayOfMonth,
-            secondDayOfMonthIsLast: validatedData.secondDayOfMonthIsLast ?? false,
-            sortOrder: validatedData.sortOrder ?? 0,
-          })
-          .returning();
+        // Fetch the current max sortOrder for this category (once per category group)
+        const highestSortOrderItem = await tx.query.budgetItems.findFirst({
+          where: and(
+            eq(budgetItems.userId, user.id),
+            eq(budgetItems.budgetCategoryId, categoryId)
+          ),
+          orderBy: desc(budgetItems.sortOrder),
+        });
 
-        results.push(newItem);
+        // Store the base sortOrder for this category
+        const baseSortOrder = highestSortOrderItem ? highestSortOrderItem.sortOrder : -1;
+
+        // Assign sortOrder to items in memory sequentially (max+1, max+2, max+3...)
+        items.forEach((item, index) => {
+          if (item.sortOrder === undefined) {
+            item.sortOrder = baseSortOrder + index + 1;
+          }
+        });
+
+        // Insert all items for this category
+        for (const item of items) {
+          const [newItem] = await tx
+            .insert(budgetItems)
+            .values({
+              userId: user.id,
+              budgetCategoryId: item.budgetCategoryId,
+              type: item.type,
+              name: item.name,
+              amount: item.amount,
+              frequency: item.frequency,
+              startDate: item.startDate,
+              dayOfWeek: item.dayOfWeek,
+              dayOfMonth: item.dayOfMonth,
+              dayOfMonthIsLast: item.dayOfMonthIsLast ?? false,
+              secondDayOfMonth: item.secondDayOfMonth,
+              secondDayOfMonthIsLast: item.secondDayOfMonthIsLast ?? false,
+              sortOrder: item.sortOrder,
+            })
+            .returning();
+
+          results.push(newItem);
+        }
       }
 
       return results;
