@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { budgetCategories, budgetItems, getBudgetCategoriesFilterSchema, getBudgetItemsFilterSchema, createBudgetCategorySchema, createBudgetItemSchema, updateBudgetCategorySchema, updateBudgetItemSchema, frequencyTypeSchema, dayOfWeekTypeSchema } from "@/db/schema";
 import { checkUser } from "@/lib/checkUser";
-import { eq, and, InferInsertModel, desc } from "drizzle-orm";
+import { eq, and, InferInsertModel, desc, ne, asc } from "drizzle-orm";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
@@ -569,3 +569,155 @@ export async function batchUpdateBudgetItems(
   }
 }
 
+/**
+ * Update the sort order of a budget category via drag-and-drop
+ * @param id - The ID of the category being moved
+ * @param newPreviousId - The ID of the category that should be before this one (null if moving to top)
+ * @param newNextId - The ID of the category that should be after this one (null if moving to bottom)
+ */
+export async function updateCategorySortOrder(
+  id: number,
+  newPreviousId: number | null,
+  newNextId: number | null
+): Promise<ActionResult> {
+  try {
+    // 1. Auth & Validation
+    const user = await checkUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Verify the category exists and belongs to the user
+    const category = await db.query.budgetCategories.findFirst({
+      where: and(
+        eq(budgetCategories.id, id),
+        eq(budgetCategories.userId, user.id)
+      ),
+    });
+
+    if (!category) {
+      return { success: false, error: "Budget category not found" };
+    }
+
+    // 2. Fetch Neighbors
+    let prevSortOrder = 0;
+    if (newPreviousId !== null) {
+      const prevCategory = await db.query.budgetCategories.findFirst({
+        where: and(
+          eq(budgetCategories.id, newPreviousId),
+          eq(budgetCategories.userId, user.id),
+          eq(budgetCategories.type, category.type) // Ensure same type
+        ),
+      });
+      if (prevCategory) {
+        prevSortOrder = prevCategory.sortOrder;
+      }
+    }
+
+    let nextSortOrder = prevSortOrder + 1000;
+    if (newNextId !== null) {
+      const nextCategory = await db.query.budgetCategories.findFirst({
+        where: and(
+          eq(budgetCategories.id, newNextId),
+          eq(budgetCategories.userId, user.id),
+          eq(budgetCategories.type, category.type) // Ensure same type
+        ),
+      });
+      if (nextCategory) {
+        nextSortOrder = nextCategory.sortOrder;
+      }
+    }
+
+    // 3. Calculate New Position
+    const newSortOrder = (prevSortOrder + nextSortOrder) / 2;
+
+    // 4. The "Heal" Strategy
+    const shouldRebalance = 
+      Math.abs(nextSortOrder - prevSortOrder) < 1 || 
+      (prevSortOrder === 0 && nextSortOrder === 0);
+
+    if (shouldRebalance) {
+      const siblings = await db.query.budgetCategories.findMany({
+        where: and(
+          eq(budgetCategories.userId, user.id),
+          eq(budgetCategories.type, category.type),
+          ne(budgetCategories.id, id)
+        ),
+        orderBy: (categories, { asc }) => [
+          asc(categories.sortOrder),
+          asc(categories.id),
+        ],
+      });
+
+      const siblingIds = siblings.map((s) => s.id);
+
+      // Insertion Logic
+      let insertIndex = 0;
+      
+      const safePrevId = newPreviousId !== null ? Number(newPreviousId) : null;
+      const safeNextId = newNextId !== null ? Number(newNextId) : null;
+
+      if (safePrevId !== null) {
+        const prevIndex = siblingIds.indexOf(safePrevId);
+        
+        if (prevIndex !== -1) {
+          insertIndex = prevIndex + 1;
+        } else {
+          if (safeNextId !== null) {
+            const nextIndex = siblingIds.indexOf(safeNextId);
+            if (nextIndex !== -1) {
+              insertIndex = nextIndex;
+            }
+          }
+        }
+      } else if (safeNextId !== null) {
+        const nextIndex = siblingIds.indexOf(safeNextId);
+        if (nextIndex !== -1) {
+          insertIndex = nextIndex;
+        }
+      }
+
+      // Insert the dragged id at the calculated index
+      siblingIds.splice(insertIndex, 0, id);
+
+      // Map the new array to clean integers (index + 1) and update all siblings in a transaction
+      await db.transaction(async (tx) => {
+        for (let i = 0; i < siblingIds.length; i++) {
+          await tx
+            .update(budgetCategories)
+            .set({
+              sortOrder: i + 1,
+              updatedAt: new Date(),
+            })
+            .where(and(
+              eq(budgetCategories.id, siblingIds[i]),
+              eq(budgetCategories.userId, user.id)
+            ));
+        }
+      });
+    } else {
+      // 5. Fast Path - Simply update the single category with the calculated decimal newSortOrder
+      await db
+        .update(budgetCategories)
+        .set({
+          sortOrder: newSortOrder,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(budgetCategories.id, id),
+          eq(budgetCategories.userId, user.id)
+        ));
+    }
+
+    // 6. Finalize - Call revalidatePath
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating category sort order:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update category sort order",
+    };
+  }
+}

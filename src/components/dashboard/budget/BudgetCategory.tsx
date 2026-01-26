@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, CheckIcon, X as XIcon, Trash2, Undo, TriangleAlert, Plus } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { BudgetItem } from "./BudgetItem";
 import { BudgetItemForm } from "./BudgetItemForm";
 import { AmountPill } from "@/components/AmountPill";
@@ -42,14 +44,37 @@ interface BudgetCategoryProps {
   category: Category;
   items: ReadBudgetItemType[];
   title: string;
+  isExpanded: boolean;
+  isEditing: boolean;
+  onToggleExpand: () => void;
+  onSetEditing: (isEditing: boolean) => void;
 }
 
 export function BudgetCategory({
   category,
   items,
   title,
+  isExpanded,
+  isEditing,
+  onToggleExpand,
+  onSetEditing
 }: BudgetCategoryProps) {
   const router = useRouter();
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id.toString() });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const itemsInDB = items
     .filter((item) => !item.isArchived)
@@ -86,8 +111,6 @@ export function BudgetCategory({
     name: category.name
   }
 
-  const [isExpanded, setIsExpanded] = useState(itemsInDB.length === 0);
-  const [isEditing, setIsEditing] = useState(itemsInDB.length === 0);
   const [itemEditValues, setItemEditValues] = useState<Record<number, UpdateItemDraft>>({});
   const [categoryEditValues, setCategoryEditValues] = useState<CategoryEditValueTypes>(originalCategoryValues);
   
@@ -208,17 +231,13 @@ export function BudgetCategory({
 
   const initializeEditState = () => {
     const initialValues: Record<number, UpdateItemDraft> = {};
-
     itemsInDB.forEach((item) => {
       initialValues[item.id] = {
         ...item,
         amount: (item.amount / 100).toFixed(2),
       };
     });
-
     setItemEditValues(initialValues);
-    setNewItems([]);
-    resetNewItem();
     setCategoryEditValues({
       emoji: category.emoji,
       name: category.name
@@ -226,26 +245,27 @@ export function BudgetCategory({
   }
 
   const closeEditState = () => {
-    initializeEditState();
-    setIsEditing(false);
+    onSetEditing(false);
   }
 
   const toggleIsEditing = () => {
     if (canUndo && isEditing) {
-      initializeEditState();
+      // User clicked "Undo" button
+      // We want to reset and close.
+      onSetEditing(false); 
       return;
     }
 
     if (isEmpty) return;
 
     if (!isEditing) {
-      initializeEditState();
-      setIsEditing(true);
-
+      // User clicked "Edit" button
+      onSetEditing(true);
       return;
     }
-
-    initializeEditState();
+    
+    // Fallback
+    onSetEditing(!isEditing);
   };
 
   /**
@@ -254,9 +274,6 @@ export function BudgetCategory({
    */
   const executeSave = async () => {
     if (isEmpty) return;
-    
-    // Note: We intentionally DO NOT check itemNotAdded here, 
-    // because executeSave is called when we want to bypass that check (via the Red X)
 
     if (!hasAnyEdits) {
       closeEditState();
@@ -432,7 +449,7 @@ export function BudgetCategory({
 
   function toggleIsExpanded() {
     if (!isEditing) {
-      setIsExpanded(!isExpanded);
+      onToggleExpand();
     }
   }
 
@@ -444,8 +461,26 @@ export function BudgetCategory({
     }, 10);
   };
 
+  useEffect(() => {
+    if (isEditing) {
+      // Logic from your old toggleIsEditing
+      initializeEditState();
+    } else {
+      // Logic from your old closeEditState
+      // We reset the form data when editing stops
+      setNewItems([]);
+      setNewItem(defaultItem);
+      setItemEditValues({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
+
   return (
-    <div className="space-y-2 p-4 rounded-xl shadow-[0px_0px_12px_rgba(0,0,0,0.1)] transition-colors">
+    <div 
+      ref={setNodeRef}
+      style={style}
+      className="space-y-2 p-4 rounded-xl shadow-[0px_0px_12px_rgba(0,0,0,0.1)] transition-colors"
+    >
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0 h-7">
         <div 
@@ -464,6 +499,7 @@ export function BudgetCategory({
                 action="edit"
                 onChange={setCategoryEditValues}
                 onClose={() => null}
+                dragHandleProps={isEditing ? { ...attributes, ...listeners } : undefined}
               />
               <div 
                 className="text-sm text-red-600 p-1.25 bg-muted hover:text-white hover:bg-red-500 rounded-full transition-all cursor-pointer"

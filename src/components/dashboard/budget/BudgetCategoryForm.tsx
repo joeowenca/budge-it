@@ -7,7 +7,7 @@ import { Category } from "@/components/dashboard/budget/BudgetCategory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X, Loader2, GripVertical } from "lucide-react";
 import EmojiPicker, { EmojiClickData, EmojiStyle, Categories } from "emoji-picker-react";
 import { BudgetType } from "@/db/schema";
 import { CategoryEditValueTypes } from "./BudgetCategory";
@@ -18,6 +18,7 @@ type BudgetCategoryFormTypes = {
     action?: "add" | "edit";
     onClose: () => void;
     onChange?: (category: CategoryEditValueTypes) => void;
+    dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
 export function BudgetCategoryForm({ 
@@ -25,7 +26,8 @@ export function BudgetCategoryForm({
     category, 
     action, 
     onClose, 
-    onChange 
+    onChange,
+    dragHandleProps
 }: BudgetCategoryFormTypes) {
     const router = useRouter();
     const isEditing = action === "edit";
@@ -115,6 +117,15 @@ export function BudgetCategoryForm({
 
     return (
         <div className="flex items-center gap-2 relative">
+            {/* Drag Handle - Only visible when editing */}
+            {isEditing && dragHandleProps && (
+                <div
+                    {...dragHandleProps}
+                    className="cursor-grab active:cursor-grabbing"
+                >
+                    <GripVertical className="cursor-grab text-muted-foreground/50" />
+                </div>
+            )}
             {/* Emoji Trigger Button */}
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                 <PopoverTrigger asChild>
