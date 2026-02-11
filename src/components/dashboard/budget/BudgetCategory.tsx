@@ -73,7 +73,7 @@ export function BudgetCategory({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   };
 
   const itemsInDB = items
@@ -479,7 +479,7 @@ export function BudgetCategory({
     <div 
       ref={setNodeRef}
       style={style}
-      className="space-y-2 p-4 rounded-xl shadow-[0px_0px_12px_rgba(0,0,0,0.1)] transition-colors"
+      className={`space-y-2 p-4 rounded-xl shadow-[0px_0px_12px_rgba(0,0,0,0.1)] transition-colors ${isDragging && "border-1 border-primary/50 shadow-primary/25"}`}
     >
       {/* Category Header - Clickable */}
       <div className="flex items-center justify-between m-0 h-7">

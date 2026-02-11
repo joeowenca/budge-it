@@ -10,6 +10,7 @@ import { AmountPillColorTypes } from "@/components/AmountPill";
 import {
   DndContext,
   closestCenter,
+  MeasuringStrategy,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -163,7 +164,7 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
         onDragCancel={handleDragCancel}
       >
         <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
-          <div className="space-y-4 mb-4">
+          <div className="flex flex-col gap-4 mb-4">
             {filteredCategories.length === 0 ? (
               <p className="text-sm text-muted-foreground ml-1">No categories yet - add one below!</p>
             ) : (
@@ -196,7 +197,7 @@ export default function BudgetSection({ title, categories, budgetType }: BudgetS
 
         <DragOverlay>
           {activeCategory && activeCategoryForDisplay ? (
-            <div className="w-full opacity-90 cursor-grabbing">
+            <div className="w-full opacity-75 blur-xs bg-white cursor-grabbing">
               <BudgetCategory
                 category={activeCategoryForDisplay}
                 items={activeCategory.budgetItems}
